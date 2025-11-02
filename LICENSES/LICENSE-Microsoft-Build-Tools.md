@@ -1,101 +1,87 @@
-# Microsoft Software License Terms
+# MICROSOFT SOFTWARE LICENSE TERMS
 
-## Microsoft Visual Studio 2022 Remote Debugger, IntelliTrace Collector, other debuggers, agents, and build tools
+## MICROSOFT VISUAL STUDIO 2022 REMOTE DEBUGGER, INTELLITRACE COLLECTOR, other DEBUGGERS, AGENTS and BUILD TOOLS
 
-These license terms are an agreement between you and Microsoft Corporation (or, based on where you live, one of its affiliates). They apply to the software named above and to any Microsoft services or updates for the software unless those have different terms.
+These license terms are an agreement between you and Microsoft Corporation (or based on where you live, one of its affiliates). They apply to the software named above. The terms also apply to any Microsoft services or updates for the software, except to the extent those have different terms.
 
-**If you comply with these license terms, you have the rights described below.**
+***
 
-## Installation and use rights
+IF YOU COMPLY WITH THESE LICENSE TERMS, YOU HAVE THE RIGHTS BELOW.
 
-- **Supplement to Visual Studio Products.** This software is licensed as a supplement to Visual Studio Community, Visual Studio Professional, and Visual Studio Enterprise (collectively, “Visual Studio Products”). Use of the software requires a valid license to one of the Visual Studio Products.
+1. **INSTALLATION AND USE RIGHTS.**
 
-- **Copies for development.** You may install and use any number of copies of the software to develop, build, and test applications created with Visual Studio Products.
+    - This software is licensed as a supplement to Visual Studio Community, Visual Studio Professional, and Visual Studio Enterprise (collectively, “Visual Studio Products”). Use of the software requires a valid license to one of the Visual Studio Products.
 
-- **Visual Studio Code.** With a valid Visual Studio Products license you may also use the software with Visual Studio Code.
+    - You may install and use any number of copies of the software to develop, build, and test your applications created with Visual Studio Products.
 
-- **Open Source Dependencies.** If you do not have a valid Visual Studio Products license, you may still install and use the software to compile and build C++ components that:
+    - With a valid license to Visual Studio Products you may also install and use the software to develop, build, and test applications with Visual Studio Code.
 
-  - have been released under an OSI-approved open-source license, and
-  - are reasonably required to build your applications.
+    - Separately, if you don’t have a valid license to any of the Visual Studio Products you may still install and use copies of the software to compile and build C++ components that (i) have been released by a third party under an open-source software license approved by the Open Source Initiative; and (ii) are also reasonably required to build your applications (“Open Source Dependencies”).
 
-  These are referred to as “Open Source Dependencies.”
+    - You may not use the software pursuant to subsection (d) to develop and test Open Source Dependencies, except, and only to the extent, minor modifications are necessary so that the Open Source Dependencies can be compiled and built with the software. For purposes of this agreement “minor modifications” are defined as modifications that do not significantly change the functionality of the Open Source Dependency. These modifications do not affect the overall structure of the Open Source Dependency. Examples of “minor modifications” include fixing typos, changing variable names, or changing options in a build script.
 
-- **Restrictions for Open Source Dependencies.** You may not use the software under the Open Source Dependencies exception to develop and test those dependencies, except for minor modifications necessary to compile and build them. "Minor modifications" are changes that do not significantly change functionality or structure (for example, fixing typos or adjusting build script options).
+2. **TERMS FOR SPECIFIC COMPONENTS.**
 
-## Terms for specific components
+   a. **Utilities.** The software contains items on the Utilities List at <https://aka.ms/vs/17/utilities>. You may copy and install those items onto your devices to debug and deploy your applications and databases you developed with Visual Studio Products. The Utilities are designed for temporary use. Microsoft may not be able to patch or update Utilities separately from the rest of the software. Some Utilities by their nature may make it possible for others to access the devices on which the Utilities are installed. You should delete all Utilities you have installed after you finish debugging or deploying your applications and databases. Microsoft is not responsible for any third party use or access of devices, or of the applications or databases on devices, on which Utilities have been installed.
 
-- **Utilities.** The software includes items on the Utilities List: [https://aka.ms/vs/17/utilities](https://aka.ms/vs/17/utilities). You may copy and install those items to debug and deploy applications and databases developed with Visual Studio Products. Utilities are intended for temporary use and may not receive separate patches. Delete Utilities after debugging or deployment to avoid unintended access. Microsoft is not responsible for third-party access to devices where Utilities are installed.
+    b. **Build Devices and Visual Studio Build Tools.** You may copy and install files from the software onto your build devices, including physical devices and virtual machines or containers on those machines, whether on-premises or remote machines that are owned by you, hosted on Microsoft Azure for you, or dedicated solely to your use (collectively, “Build Devices”). You and others in your organization may use these files on your Build Devices solely to (a) compile, build, and verify (i) applications developed by using Visual Studio Products, (ii) applications developed by using Visual Studio Code if you also have a valid license to a Visual Studio Product, and (iii) Open Source Dependencies, and (b) run quality or performance tests of those applications and Open Source Dependencies as part of the build process.
 
-- **Build Devices and Build Tools.** You may copy and install files from the software onto your build devices (physical, virtual, or containers, on-premises or hosted) and use them to:
+    c. **Microsoft Platforms.** The software may include components from Microsoft Windows; Microsoft Windows Server; Microsoft SQL Server; Microsoft Exchange; Microsoft Office; and Microsoft SharePoint, or other Microsoft software. These components are governed by separate agreements and their own product support policies, as described in the Microsoft “Licenses” folder accompanying the software, except that, if license terms for those components are also included in the associated installation directory, those license terms control.
 
-  - compile, build, and verify applications developed with Visual Studio Products;
-  - compile, build, and verify applications developed with Visual Studio Code if you also have a valid Visual Studio Products license; and
-  - compile, build, and verify Open Source Dependencies;
+    d. **Third Party Components.** The software may include third party components with separate legal notices or governed by other agreements, as may be described in the notices file(s) accompanying the software.
 
-  and to run quality or performance tests as part of the build process.
+3. **DATA.**
 
-- **Microsoft Platforms.** The software may include components governed by separate license terms (Windows, SQL Server, Exchange, Office, SharePoint, etc.). Those components are governed by their own license terms as described in the accompanying "Licenses" folder or installation directory.
+    a. **Data Collection.** The software may collect information about you and your use of the software, and send that to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may opt-out of many of these scenarios, but not all, as described in the software documentation. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft’s privacy statement. Our privacy statement is located at <https://aka.ms/privacy>. You can learn more about data collection and its use from the software documentation and our privacy statement. Your use of the software operates as your consent to these practices.
 
-- **Third-party components.** The software may include third-party components with separate legal notices or agreements listed in the accompanying notices file(s).
+    b. **Processing of Personal Data.** To the extent Microsoft is a processor or subprocessor of personal data in connection with the software, Microsoft makes the commitments in the European Union General Data Protection Regulation Terms of the Microsoft Products and Services Data Protection Addendum to all customers effective May 25, 2018, at <https://docs.microsoft.com/legal/gdpr>.
 
-## Data
+4. **SCOPE OF LICENSE.** The software is licensed, not sold. These license terms only give you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in these license terms. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. In addition, you may not:
 
-- **Data collection.** The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve products. You may be able to opt out of some data collection scenarios as described in the documentation. Some features may enable collection of data from users of your applications; if you use those features you must comply with applicable law and provide appropriate notices, including Microsoft’s privacy statement: [https://aka.ms/privacy](https://aka.ms/privacy).
+   - work around any technical limitations in the software;
 
-- **Processing of personal data.** To the extent Microsoft is a processor or subprocessor for personal data, Microsoft makes commitments in the EU GDPR Terms of the Microsoft Products and Services Data Protection Addendum (effective May 25, 2018): [https://docs.microsoft.com/legal/gdpr](https://docs.microsoft.com/legal/gdpr).
+   - reverse engineer, decompile or disassemble the software, or otherwise attempt to derive the source code for the software, except and only to the extent required by third party licensing terms governing use of certain open source components that may be included with the software;
 
-## Scope of license
+   - remove, minimize, block or modify any notices of Microsoft or its suppliers in the software;
 
-The software is licensed, not sold. These license terms give you specific rights to use the software; Microsoft reserves all other rights. You must comply with technical limitations in the software and you may not:
+   - use the software in any way that is against the law;
 
-- work around technical limitations;
-- reverse engineer, decompile, or disassemble the software except as required by applicable third-party open-source licensing;
-- remove or modify Microsoft or supplier notices in the software;
-- use the software unlawfully;
-- share, publish, rent, or lease the software; or
-- provide the software as a stand-alone offering or transfer the software or this agreement to a third party.
+   - share, publish, rent, or lease the software; or
 
-## Feedback
+   - provide the software as a stand-alone offering or combine it with any of your applications for others to use, or transfer the software or this agreement to any third party.
 
-If you give feedback about the software to Microsoft, you grant Microsoft a royalty-free, worldwide, transferable right to use, share, and commercialize that feedback. Do not submit feedback that is under a license that would require Microsoft to license its software or documentation to third parties.
+5. **FEEDBACK.** If you give feedback about the software to Microsoft, you give to Microsoft, without charge, the right to use, share, and commercialize your feedback in any way and for any purpose. You will not give feedback that is subject to a license that requires Microsoft to license its software or documentation to third parties because we include your feedback in them. These rights survive this agreement.
 
-## Support services
+6. **SUPPORT SERVICES.** Because this software is “as is”, we may not provide support services for it.
 
-This software is provided "as-is" and Microsoft may not provide support services for it.
+7. ENTIRE AGREEMENT. This agreement, and the terms for supplements, updates, Internet-based services and support services, are the entire agreement for the software and support services.
 
-## Entire agreement
+8. **EXPORT RESTRICTIONS.** You must comply with all domestic and international export laws and regulations that apply to the software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit <https://www.microsoft.com/exporting>.
 
-These license terms, together with terms for supplements, updates, and Internet-based services, are the entire agreement for the software and any support services.
+9. **APPLICABLE LAW.** If you acquired the software in the United States, Washington state law applies to interpretation of, and claims for breach of this agreement, and the laws of the state where you live apply to all other claims. If you acquired the software in any other country, its laws apply.
 
-## Export restrictions
+10. **CONSUMER RIGHTS; REGIONAL VARIATIONS.** These license terms describe certain legal rights. You may have other rights, including consumer rights, under the laws of your state or country. You may also have rights with respect to the party from which you acquired the software. This agreement does not change those other rights if the laws of your state or country do not permit it to do so. For example, if you acquired the software in one of the below regions, or mandatory country law applies, then the following provisions apply to you:
 
-You must comply with applicable export laws and regulations. For more information see: [https://www.microsoft.com/exporting](https://www.microsoft.com/exporting).
+    a. **Australia.** You have statutory guarantees under the Australian Consumer Law and nothing in this agreement is intended to affect those rights.
 
-## Applicable law
+    b. **Canada.** You may stop receiving updates on your device by turning off Internet access. If and when you re-connect to the Internet, the software will resume checking for and installing updates.
 
-If you acquired the software in the United States, Washington state law governs interpretation and claims for breach of this agreement; the laws of your home state apply to other claims. If you acquired the software elsewhere, local law applies.
+    c. **Germany and Austria.**
 
-## Consumer rights; regional variations
+    1. **Warranty.** The properly licensed software will perform substantially as described in any Microsoft materials that accompany the software. However, Microsoft gives no contractual guarantee in relation to the licensed software.
 
-These terms describe certain legal rights and do not affect statutory consumer rights in your country or state where those rights cannot be waived. Examples:
+    2. **Limitation of Liability.** In case of intentional conduct, gross negligence, claims based on the Product Liability Act, as well as, in the case of death or personal or physical injury, Microsoft is liable according to the statutory law.
 
-- **Australia.** You have statutory guarantees under the Australian Consumer Law.
-- **Canada.** You can stop receiving updates by turning off Internet access; updates resume when you reconnect.
-- **Germany and Austria.**
+        Subject to the preceding sentence (ii), Microsoft will only be liable for slight negligence if Microsoft is in breach of such material contractual obligations, the fulfillment of which facilitate the due performance of this agreement, the breach of
 
-  - **(i) Warranty.** Properly licensed software will perform substantially as described in accompanying Microsoft materials, but Microsoft provides no contractual guarantee.
+        which would endanger the purpose of this agreement and the compliance with which a party may constantly trust in (so-called "cardinal obligations"). In other cases of slight negligence, Microsoft will not be liable for slight negligence.
 
-  - **(ii) Limitation of Liability.** Microsoft is liable under applicable statutory law for intentional conduct, gross negligence, death, or personal injury. For slight negligence, liability is limited to breaches of cardinal obligations.
+11. **DISCLAIMER OF WARRANTY. THE SOFTWARE IS LICENSED “AS-IS”. YOU BEAR THE RISK OF USING IT. MICROSOFT GIVES NO EXPRESS WARRANTIES, GUARANTEES OR CONDITIONS. TO THE EXTENT PERMITTED UNDER YOUR LOCAL LAWS, MICROSOFT EXCLUDES THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.**
 
-## Disclaimer of warranty
+12. **LIMITATION ON AND EXCLUSION OF DAMAGES. YOU CAN RECOVER FROM MICROSOFT AND ITS SUPPLIERS ONLY DIRECT DAMAGES UP TO U.S. $5.00. YOU CANNOT RECOVER ANY OTHER DAMAGES, INCLUDING CONSEQUENTIAL, LOST PROFITS, SPECIAL, INDIRECT OR INCIDENTAL DAMAGES.**
 
-THE SOFTWARE IS LICENSED "AS-IS". YOU BEAR THE RISK OF USING IT. MICROSOFT PROVIDES NO EXPRESS WARRANTIES. TO THE EXTENT PERMITTED BY LAW, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE EXCLUDED.
+This limitation applies to (a) anything related to the software, services, content (including code) on third party Internet sites, or third party applications; and (b) claims for breach of contract, breach of warranty, guarantee or condition, strict liability, negligence, or other tort to the extent permitted by applicable law.
 
-## Limitation on and exclusion of damages
+It also applies even if Microsoft knew or should have known about the possibility of the damages. The above limitation or exclusion may not apply to you because your country may not allow the exclusion or limitation of incidental, consequential or other damages.
 
-YOU CAN RECOVER FROM MICROSOFT AND ITS SUPPLIERS ONLY DIRECT DAMAGES UP TO U.S. $5.00. YOU CANNOT RECOVER OTHER DAMAGES, INCLUDING CONSEQUENTIAL, LOST PROFITS, SPECIAL, INDIRECT, OR INCIDENTAL DAMAGES.
-
-This limitation applies to claims related to the software, services, third-party content or applications, and covers contract, warranty, tort, and other claims to the extent permitted by law. It may not apply in all jurisdictions where exclusions or limitations of certain damages are prohibited.
-
-**EULA ID:** `VS_2022_Tools_2024Mar_ENU.1033`
+EULAID: VS_2022_Tools_2024Mar_ENU.1033
