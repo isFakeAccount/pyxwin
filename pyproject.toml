@@ -1,0 +1,64 @@
+[project]
+authors = [{ name = "Yoshikage Kira", email = "8bit_yoshikage_kira@proton.me" }]
+dependencies = [
+    "httpx (>=0.28.1,<0.29.0)",
+    "platformdirs (>=4.3.8,<5.0.0)",
+    "typer (>=0.16.0,<0.17.0)",
+    "pydantic (>=2.12.3,<3.0.0)",
+]
+description = "A utility for downloading and packaging the Microsoft CRT & Windows SDK headers and libraries needed for compiling and linking python extension modules targeting Windows."
+keywords = ["Windows CRT", "Windows SDK"]
+license = { file = "LICENSE.md" }
+name = "pyxwin"
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+version = "0.1.0"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires      = ["poetry-core>=2.0.0,<3.0.0"]
+
+[tool.poetry]
+packages = [{ include = "pyxwin", from = "src" }]
+
+[tool.poetry.group.typing.dependencies]
+mypy    = "^1.18.2"
+pyright = "^1.1.407"
+
+[tool.poetry.group.linting.dependencies]
+docstrfmt = "^1.11.1"
+ruff      = "^0.14.3"
+
+[tool.poetry.scripts]
+pyxwin = "pyxwin.__main__:main"
+
+[tool.ruff]
+line-length = 160
+
+[tool.ruff.format]
+docstring-code-format      = true
+docstring-code-line-length = 88
+
+[tool.ruff.lint]
+ignore = [
+    "COM812", # Allow missing trailing comma. (handled by ruff format)
+    "D203",   # Allow class doc strings without requiring a blank line before them (conflicts with D211).
+    "D213",   # Allow multi-line docstring summaries to end on the first line (conflicts with D212).
+    "D401",   # Allow docstring summaries that are not in imperative mood.
+    "EM",     # Allow exception messages that do not follow specific formatting rules.
+    "FBT",    # Allow functions to take boolean positional arguments.
+    "S311",   # Allow use of Standard pseudo-random generators.
+    "S603",   # Allow `subprocess` calls without enforcing `shell=False` (potential security risk).
+    "T201",   # Allow usage of `print()` instead of enforcing logging.
+    "TRY003", # Allow specifying long error messages inside the exception class instead of outside.
+]
+select = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["D", "S101", "SIM117"]
+
+[tool.ruff.lint.pylint]
+max-args = 15
+
+[tool.docstrfmt]
+line-length = 120
