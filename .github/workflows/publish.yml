@@ -19,6 +19,8 @@ jobs:
         with:
           workflow: "windows-python-dev-kit.yml"
           path: dist/
+          skip_unpack: true
+
 
       - name: Create or update release
         uses: softprops/action-gh-release@v2
@@ -27,4 +29,4 @@ jobs:
           name: ${{ github.event.inputs.release-name }}
           draft: false
           prerelease: false
-          files: dist/**/*.zip
+          files: dist/*.zip
