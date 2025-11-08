@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "__main__ with args",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "module": "pyxwin",
+            "console": "integratedTerminal",
+            "args": [
+                "test"
+            ],
+            "justMyCode": false,
+            "env": {
+                "PYXWIN_ACCEPT_LICENSE": "1"
+            }
+        }
+    ]
+}

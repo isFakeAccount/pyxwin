@@ -1,3 +1,6 @@
 {
     "evenBetterToml.taplo.configFile.path": "taplo.toml",
+    "cSpell.words": [
+        "pyxwin"
+    ],
 }
