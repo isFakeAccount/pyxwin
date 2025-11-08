@@ -1,0 +1,37 @@
+name: Windows Python Development Kit
+
+on:
+    workflow_dispatch:
+
+jobs:
+    package-python-dev:
+        strategy:
+            matrix:
+                python-version: [3.13.8]
+                arch: [x64, x86, arm64]
+        runs-on: ${{ matrix.arch == 'arm64' && 'windows-11-arm64' || 'windows-latest' }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  architecture: ${{ matrix.arch }}
+
+            - name: Show installed Python info
+              shell: pwsh
+              run: |
+                  python -V
+                  python -c "import sys, os; print(sys.executable); print(sys.platform); print(sys.version)"
+
+            - name: Run packaging script
+              run: python .github/scripts/package_python.py -p ${{ matrix.python-version }} -a ${{ matrix.arch }}
+
+            - name: Upload dev archive
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python-${{ matrix.python-version }}-${{ matrix.arch }}-windows
+                  path: dist/python-${{ matrix.python-version }}-${{ matrix.arch }}-windows
+                  overwrite: true
