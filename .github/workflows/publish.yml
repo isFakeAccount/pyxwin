@@ -27,4 +27,4 @@ jobs:
           name: ${{ github.event.inputs.release-name }}
           draft: false
           prerelease: false
-          files: dist/*.zip
+          files: dist/**/*.zip
