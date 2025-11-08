@@ -1,0 +1,22 @@
+name: Publish Artifacts to GitHub Releases
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package-python-dev:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: dist/
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: python-dev-${{ github.run_number }}
+          name: Windows Python Dev #${{ github.run_number }}
+          draft: false
+          prerelease: false
+          files: dist/**/*.zip
