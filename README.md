@@ -8,3 +8,60 @@ The goal is to let Python users download Python, Microsoft CRT and Windows SDK t
 
 > [!NOTE]
 > To use this tool you must accept the MICROSOFT VISUAL STUDIO REMOTE DEBUGGER, INTELLITRACE COLLECTOR, other DEBUGGERS, AGENTS and BUILD TOOLS License agreement. See LICENSES/LICENSE-Microsoft-Build-Tools.md for details.
+
+## Directory Structure
+
+The directory structure created by this tool is as follows:
+
+```text
+.pyxwin-cache/
+- manifest_<version>
+  - <channel_name>
+    - vs_channel_manifest.json
+    - vs_installer_manifest.json 
+- downloads
+  - CRT_<Version>
+  - SDK_<Version>
+- unpack
+  - CRT_<Version>
+  - SDK_<Version>
+- splat
+  - CRT_<Version>
+    - include
+    - desktop
+      - x86
+      - x86_64
+      - arm
+      - arm64
+    - onecore
+      - x86
+      - x86_64
+      - arm
+      - arm64
+    - spectre
+      - desktop
+        - x86
+        - x86_64
+        - arm
+        - arm64
+      - onecore
+        - x86
+        - x86_64
+        - arm
+        - arm64
+  - SDK_<Version>
+    - include
+    - lib
+      - ucrt
+        - x86
+        - x86_64
+        - arm
+        - arm64
+      - usermode
+        - x86
+        - x86_64
+        - arm
+        - arm64
+```
+
+Where `<Version>` is the version of the CRT or SDK downloaded.

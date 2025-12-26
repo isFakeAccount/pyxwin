@@ -1,17 +1,18 @@
 [project]
 authors = [{ name = "Yoshikage Kira", email = "8bit_yoshikage_kira@proton.me" }]
 dependencies = [
+    "aiofiles (>=25.1.0,<26.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
     "platformdirs (>=4.3.8,<5.0.0)",
-    "typer (>=0.16.0,<0.17.0)",
     "pydantic (>=2.12.3,<3.0.0)",
+    "typer (>=0.16.0,<0.17.0)",
 ]
 description = "A utility for downloading and packaging the Microsoft CRT & Windows SDK headers and libraries needed for compiling and linking python extension modules targeting Windows."
 keywords = ["Windows CRT", "Windows SDK"]
 license = { file = "LICENSE.md" }
 name = "pyxwin"
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.11,<4.0"
 version = "0.1.0"
 
 [build-system]
@@ -19,18 +20,22 @@ build-backend = "poetry.core.masonry.api"
 requires      = ["poetry-core>=2.0.0,<3.0.0"]
 
 [tool.poetry]
-packages = [{ include = "pyxwin", from = "src" }]
+packages = [
+    { include = "pyxwin", from = "src" },
+    { include = "pyxwin_cli", from = "src" },
+]
 
 [tool.poetry.group.typing.dependencies]
-mypy    = "^1.18.2"
-pyright = "^1.1.407"
+mypy           = "^1.18.2"
+pyright        = "^1.1.407"
+types-aiofiles = "^25.1.0.20251011"
 
 [tool.poetry.group.linting.dependencies]
 docstrfmt = "^1.11.1"
 ruff      = "^0.14.3"
 
 [tool.poetry.scripts]
-pyxwin = "pyxwin.__main__:main"
+pyxwin_cli = "pyxwin_cli.__main__:main"
 
 [tool.ruff]
 line-length = 160
@@ -62,3 +67,45 @@ max-args = 15
 
 [tool.docstrfmt]
 line-length = 120
+
+[tool.mypy]
+# Enable strict mode, which includes several strictness flags
+strict = true
+
+# Disallow dynamic typing
+disallow_any_decorated   = false
+disallow_any_explicit    = false
+disallow_any_expr        = false
+disallow_any_generics    = true
+disallow_any_unimported  = true
+disallow_subclassing_any = true
+
+plugins = ["pydantic.mypy"]
+
+# Additional strictness settings
+check_untyped_defs          = true
+disallow_incomplete_defs    = true
+disallow_untyped_calls      = true
+disallow_untyped_decorators = true
+disallow_untyped_defs       = true
+no_implicit_optional        = true
+no_implicit_reexport        = true
+show_error_codes            = true
+strict_equality             = true
+warn_redundant_casts        = true
+warn_return_any             = true
+warn_unreachable            = true
+warn_unused_configs         = true
+warn_unused_ignores         = true
+
+[tool.pydantic-mypy]
+init_forbid_extra             = true
+init_typed                    = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields           = true
+
+[tool.pyright]
+exclude            = [".venv", "venv"]
+pythonVersion      = "3.11"
+reportPrivateUsage = false
+typeCheckingMode   = "strict"

@@ -1,6 +1,12 @@
 {
     "evenBetterToml.taplo.configFile.path": "taplo.toml",
     "cSpell.words": [
-        "pyxwin"
+        "aarch",
+        "aiojson",
+        "onecore",
+        "pyxwin",
+        "UCRT",
+        "wincrt"
     ],
+    "autoDocstring.docstringFormat": "sphinx-notypes",
 }
