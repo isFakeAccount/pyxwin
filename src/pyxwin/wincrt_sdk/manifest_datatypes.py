@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 # Note: Pydantic needs this outside of TYPE_CHECKING block
-from pathlib import Path  # noqa: TC003
+from pathlib import Path
 from typing import NewType, Self
 
 # Note: Pydantic needs this outside of TYPE_CHECKING block
@@ -238,6 +238,7 @@ class PayloadType(StrEnum):
     SDK_STORE_LIBS = "SdkStoreLibs"
     UCRT = "Ucrt"
     VCR_DEBUG = "VcrDebug"
+    CAB_FILE = "CabFile"
 
 
 def detect_arch_from_id(item_id: str, kind: PayloadType) -> Architecture:
@@ -285,6 +286,11 @@ class CRTPayload(BaseModel):
     # If a package has a single payload, this will be set to the actual
     # size it will be on disk when decompressed
     install_size: int | None
+
+    @property
+    def suggested_install_filepath(self) -> Path:
+        """Returns the recommended install path w.r.t to pyxwin cache directory."""
+        return Path(f"CRT_{self.version}", self.filename)
 
     @classmethod
     def from_manifest_item(cls, manifest_item: ManifestItem, kind: PayloadType, crt_version: Version, spectre_hardened: bool) -> Self:
@@ -361,6 +367,11 @@ class SDKPayload(BaseModel):
     # size it will be on disk when decompressed
     install_size: int | None
 
+    @property
+    def suggested_install_filepath(self) -> Path:
+        """Returns the recommended install path w.r.t to pyxwin cache directory."""
+        return Path(f"SDK_{self.version}", self.filename)
+
     @classmethod
     def from_manifest_payload(
         cls,
@@ -381,8 +392,12 @@ class SDKPayload(BaseModel):
 
         """
         new_file_name = manifest_payload.file_name.replace(" ", "_").replace("\\", "_").lower()
+
+        if kind == PayloadType.CAB_FILE:
+            new_file_name = new_file_name.replace("installers_", "")
+
         return cls(
-            filename=f"{sdk_prefix}_{new_file_name}",
+            filename=f"{sdk_prefix}_{new_file_name}" if kind != PayloadType.CAB_FILE else new_file_name,
             kind=kind,
             sha256=manifest_payload.sha256,
             size=manifest_payload.size,

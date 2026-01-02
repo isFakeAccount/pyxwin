@@ -4,6 +4,7 @@
         "aarch",
         "aiojson",
         "onecore",
+        "pymsi",
         "pyxwin",
         "UCRT",
         "wincrt"

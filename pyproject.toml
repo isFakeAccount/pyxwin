@@ -6,6 +6,7 @@ dependencies = [
     "platformdirs (>=4.3.8,<5.0.0)",
     "pydantic (>=2.12.3,<3.0.0)",
     "typer (>=0.16.0,<0.17.0)",
+    "python-msi @ git+https://github.com/isFakeAccount/pymsi.git",
 ]
 description = "A utility for downloading and packaging the Microsoft CRT & Windows SDK headers and libraries needed for compiling and linking python extension modules targeting Windows."
 keywords = ["Windows CRT", "Windows SDK"]
@@ -31,7 +32,7 @@ pyright        = "^1.1.407"
 types-aiofiles = "^25.1.0.20251011"
 
 [tool.poetry.group.linting.dependencies]
-docstrfmt = "^1.11.1"
+docstrfmt = "^2.0.0"
 ruff      = "^0.14.3"
 
 [tool.poetry.scripts]

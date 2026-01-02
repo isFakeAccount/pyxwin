@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
 
 from pyxwin.core.pyxwin_exceptions import PyxwinError, PyxwinMissingPackageError, UnsupportedPackageConfigurationError
-from pyxwin.wincrt_sdk.manifest_datatypes import Architecture, ManifestItem, ManifestOptions, ManifestPayload, PayloadType, PyxwinPackages, SDKPayload
+from pyxwin.wincrt_sdk.manifest_datatypes import Architecture, ManifestItem, ManifestOptions, ManifestPayload, PayloadType, SDKPayload
+
+if TYPE_CHECKING:
+    from pyxwin.wincrt_sdk.manifest_datatypes import PyxwinPackages
 
 
 def _parse_version_string(version_str: str | None) -> tuple[int, Version]:
@@ -178,6 +182,44 @@ def get_sdk_libs(
     return lib_payloads
 
 
+def get_cab_files(
+    sdk_key: str,
+    sdk_version: Version,
+    sdk_payloads: list[ManifestPayload],
+    packages_manifest: dict[str, list[ManifestItem]],
+) -> dict[str, SDKPayload]:
+    """Gets all the CAB file payloads from the SDK payloads."""
+    cab_payloads: dict[str, SDKPayload] = {}
+    for p in sdk_payloads:
+        if p.file_name.endswith(".cab"):
+            cab_payloads[p.file_name] = SDKPayload.from_manifest_payload(
+                manifest_payload=p,
+                sdk_prefix=sdk_key,
+                kind=PayloadType.CAB_FILE,
+                target_arch=Architecture.ALL,
+                sdk_version=sdk_version,
+            )
+
+    ucrt = packages_manifest.get("Microsoft.Windows.UniversalCRT.HeadersLibsSources.Msi")
+    if ucrt is None:
+        raise PyxwinError("Universal CRT package not found in manifest.")
+    ucrt_payloads = ucrt[0].payloads
+    if ucrt_payloads is None:
+        raise PyxwinError("No payloads found for Universal CRT package.")
+
+    for p in ucrt_payloads:
+        if p.file_name.endswith(".cab"):
+            cab_payloads[p.file_name] = SDKPayload.from_manifest_payload(
+                manifest_payload=p,
+                sdk_prefix=sdk_key,
+                kind=PayloadType.CAB_FILE,
+                target_arch=Architecture.ALL,
+                sdk_version=sdk_version,
+            )
+
+    return cab_payloads
+
+
 async def get_sdk(pyxwin_packages: PyxwinPackages, manifest_options: ManifestOptions) -> dict[str, SDKPayload]:
     """Gets the Windows SDK packages from the dict of all package manifests."""
     sdk_key, sdk_version = get_sdk_version(list(pyxwin_packages.keys()), manifest_options.sdk_version)
@@ -200,5 +242,10 @@ async def get_sdk(pyxwin_packages: PyxwinPackages, manifest_options: ManifestOpt
         sdk_version=sdk_version,
         sdk_payloads=sdk_payloads,
     )
-
-    return header_payloads | lib_payloads
+    cab_payloads = get_cab_files(
+        sdk_key=sdk_key,
+        sdk_version=sdk_version,
+        sdk_payloads=sdk_payloads,
+        packages_manifest=pyxwin_packages,
+    )
+    return header_payloads | lib_payloads | cab_payloads

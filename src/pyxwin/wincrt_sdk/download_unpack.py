@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
-from zipfile import ZipFile
+from typing import TYPE_CHECKING
 
-from pyxwin.core.https_client import fetch_file_bytes
-from pyxwin.utils.aiofiles_wrapper import async_write_bytes
-from pyxwin.wincrt_sdk.manifest_datatypes import SDKPayload
+from pyxwin.io_operations.file_io import multi_download_and_validate, multi_extract_msi_async, multi_extract_vsix_async
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine
     from pathlib import Path
 
-    from pyxwin.wincrt_sdk.manifest_datatypes import CRTPayload, ManifestOptions
+    from pyxwin.wincrt_sdk.manifest_datatypes import CRTPayload, ManifestOptions, SDKPayload
 
 
 async def download_packages(
@@ -26,46 +22,43 @@ async def download_packages(
     :param packages: A list of SDKPayload or CRTPayload objects representing the packages to download.
 
     """
-    download_tasks: dict[str, asyncio.Task[bytes]] = {}
-    async with asyncio.TaskGroup() as group:
-        for package_name, package in packages.items():
-            task = group.create_task(fetch_file_bytes(package.url))
-            download_tasks[package_name] = task
+    files_to_download: list[tuple[str, Path, str]] = []
+    for package in packages.values():
+        file_path = manifest_options.cache_dir / "downloads" / package.suggested_install_filepath
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+        files_to_download.append((package.url, file_path, package.sha256))
 
-    downloaded_file_paths: list[Path] = []
-    async with asyncio.TaskGroup() as group:
-        for package_name, file_content in download_tasks.items():
-            pkg = packages[package_name]
-            package_dir_name = f"{'SDK' if isinstance(pkg, SDKPayload) else 'CRT'}_{pkg.version}"
-            file_path = manifest_options.cache_dir / "downloads" / package_dir_name / pkg.filename
-            file_path.parent.mkdir(exist_ok=True, parents=True)
+    await multi_download_and_validate(files_to_download)
 
-            group.create_task(async_write_bytes(file_path, file_content.result()))
-            downloaded_file_paths.append(file_path)
-
-    return downloaded_file_paths
+    return [x[1] for x in files_to_download]
 
 
 async def unpack_files(manifest_options: ManifestOptions, file_paths: list[Path]) -> None:
-    task_ref: list[Coroutine[Any, Any, None]] = []
+    """Unpacks downloaded Windows CRT and SDK packages.
+
+    :param manifest_options: Stores the config options for fetching the Win CRT & SDK files.
+    :param file_paths: A list of file paths to the downloaded packages.
+
+    """
+    vsix_file_paths: list[tuple[Path, Path]] = []
+    msi_file_paths: list[tuple[Path, Path]] = []
+
     for file_path in file_paths:
         file_name = file_path.name
         package_dir_name = file_path.parent.name
+
+        # No need to unpack CAB files directly
+        if file_name.endswith(".cab"):
+            continue
 
         extract_location = manifest_options.cache_dir / "unpack" / package_dir_name / file_name
         extract_location.mkdir(exist_ok=True, parents=True)
 
         if file_path.suffix == ".vsix":
-            task_ref.append(
-                asyncio.to_thread(
-                    _extract_vsix,
-                    file_path,
-                    extract_location,
-                )
-            )
-    await asyncio.gather(*task_ref)
+            vsix_file_paths.append((file_path, extract_location))
+        elif file_path.suffix == ".msi":
+            msi_file_paths.append((file_path, extract_location))
 
-
-def _extract_vsix(file_path: Path, extract_location: Path) -> None:
-    with ZipFile(file_path, "r") as zip_ref:
-        zip_ref.extractall(extract_location)
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(multi_extract_vsix_async(vsix_file_paths))
+        tg.create_task(multi_extract_msi_async(msi_file_paths))

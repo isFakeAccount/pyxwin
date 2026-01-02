@@ -63,8 +63,6 @@ def download() -> None:
         asyncio.run(unpack_files(manifest_options, downloaded_file_paths))
         progress.update(task, completed=100)
 
-    breakpoint()
-
 
 @wincrt_app.callback()
 def app_callback(

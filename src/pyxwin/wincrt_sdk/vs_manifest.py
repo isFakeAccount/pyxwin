@@ -9,7 +9,7 @@ from pydantic import TypeAdapter
 
 from pyxwin.core.https_client import fetch_file
 from pyxwin.core.pyxwin_exceptions import MalformedJsonError
-from pyxwin.utils.aiofiles_wrapper import async_read_text, async_write_text
+from pyxwin.io_operations.aiofiles_wrapper import async_read_text, async_write_text
 from pyxwin.wincrt_sdk.manifest_datatypes import (
     CRTPayload,
     ItemType,
@@ -96,6 +96,7 @@ async def _fetch_installer_manifest(vs_installer_manifest_packages: list[Manifes
         raise MalformedJsonError("Payload missing from the installer manifest")
 
     # There should be only one payload for the manifest.
+    # Also the sha256 for installer manifest does not match so reasons called Microsoft skill issue.
     installer_manifest_url = installer_manifest_metadata.payloads[0].url
     installer_manifest_text = await fetch_file(installer_manifest_url)
     await async_write_text(dest_path, installer_manifest_text)
