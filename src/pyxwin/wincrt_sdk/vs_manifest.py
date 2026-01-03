@@ -7,9 +7,9 @@ from urllib.parse import quote
 
 from pydantic import TypeAdapter
 
+from pyxwin.core.aiofiles_wrapper import async_read_text, async_write_text
 from pyxwin.core.https_client import fetch_file
 from pyxwin.core.pyxwin_exceptions import MalformedJsonError
-from pyxwin.io_operations.aiofiles_wrapper import async_read_text, async_write_text
 from pyxwin.wincrt_sdk.manifest_datatypes import (
     CRTPayload,
     ItemType,

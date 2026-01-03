@@ -11,6 +11,8 @@ The goal is to let Python users download Python, Microsoft CRT and Windows SDK t
 
 ## Directory Structure
 
+[Tree Visualization](https://tree.nathanfriend.com)
+
 The directory structure created by this tool is as follows:
 
 ```text
@@ -21,11 +23,15 @@ The directory structure created by this tool is as follows:
     - vs_installer_manifest.json 
 - downloads
   - CRT_<Version>
+    - ...
   - SDK_<Version>
+    - ...
 - unpack
   - CRT_<Version>
+    - ...
   - SDK_<Version>
-- splat
+    - ...
+- reduced
   - CRT_<Version>
     - include
     - desktop
@@ -51,6 +57,11 @@ The directory structure created by this tool is as follows:
         - arm64
   - SDK_<Version>
     - include
+      - ucrt
+      - shared
+      - um
+      - winrt
+      - cppwinrt
     - lib
       - ucrt
         - x86

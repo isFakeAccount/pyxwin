@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+from hashlib import sha256
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import aiofiles
+
+from pyxwin.core.https_client import fetch_file_bytes
+from pyxwin.core.pyxwin_exceptions import PyxwinDownloadError
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -63,3 +69,34 @@ async def async_write_bytes(path: Path, raw_bytes: bytes) -> None:
     """
     async with aiofiles.open(path, "wb") as fp:
         await fp.write(raw_bytes)
+
+
+async def download_and_validate(url: str, file_path: Path, target_sha256: str) -> None:
+    """Downloads the file from the specified URL and validates its SHA256 checksum.
+
+    :param url: The URL to download the file from.
+    :param file_path: The path to save the downloaded file.
+    :param target_sha256: The expected SHA256 checksum of the file.
+
+    :raises PyxwinDownloadError: If the downloaded file's SHA256 does not match the expected value.
+    :raises OSError: If there is an error writing the file to disk.
+
+    """
+    raw_bytes = await fetch_file_bytes(url)
+
+    downloaded_sha = sha256(raw_bytes).hexdigest()
+    if target_sha256.lower() != downloaded_sha.lower():
+        raise PyxwinDownloadError(status_code=None, message=f"SHA256 mismatch for url {url}")
+
+    await async_write_bytes(file_path, raw_bytes)
+
+
+async def multi_download_and_validate(files: list[tuple[str, Path, str]]) -> None:
+    """Downloads and validates multiple files concurrently.
+
+    :param files: A list of tuples containing (url, file_path, target_sha256) for each file.
+
+    """
+    async with asyncio.TaskGroup() as group:
+        for url, file_path, target_sha256 in files:
+            group.create_task(download_and_validate(url, file_path, target_sha256))

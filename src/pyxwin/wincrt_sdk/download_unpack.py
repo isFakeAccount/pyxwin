@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from pyxwin.io_operations.file_io import multi_download_and_validate, multi_extract_msi_async, multi_extract_vsix_async
+from pyxwin.core.aiofiles_wrapper import multi_download_and_validate
+from pyxwin.wincrt_sdk.msft_file_operations import multi_extract_msi_async, multi_extract_vsix_async
 
 if TYPE_CHECKING:
     from pathlib import Path
