@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 
 # Note: Pydantic needs this outside of TYPE_CHECKING block
 from pathlib import Path
-from typing import NewType, Self
+from typing import Literal, NewType, Self
 
 # Note: Pydantic needs this outside of TYPE_CHECKING block
-from packaging.version import Version  # noqa: TC002
+from packaging.version import InvalidVersion, Version
 from platformdirs import user_cache_path
 from pydantic import BaseModel, Field
 from typing_extensions import TypeAliasType
@@ -155,6 +156,78 @@ class ManifestOptions(BaseModel, validate_assignment=True):
             include_atl=False,
             include_spectre=False,
         )
+
+    def get_crt_path(self, artifact_state: Literal["downloads", "unpack", "reduced"]) -> Path:
+        """Returns the path where CRT files are stored.
+
+        If a specific CRT version is not specified, the latest available version is used.
+
+        :returns: The CRT storage path.
+
+        """
+        if self.crt_version is not None:
+            _crt_path = self.cache_dir / artifact_state / f"CRT_{self.crt_version}"
+            if not _crt_path.exists():
+                raise PyxwinError("The CRT version is not yet downloaded.")
+            return _crt_path
+
+        all_crts = list((self.cache_dir / artifact_state).glob("CRT_*"))
+        if not all_crts:
+            raise PyxwinError("No CRT versions found in cache directory.")
+
+        crt_versions = [Version(x.name.removeprefix("CRT_")) for x in all_crts]
+        latest_version = max(crt_versions)
+
+        return self.cache_dir / artifact_state / f"CRT_{latest_version}"
+
+    def get_sdk_path(self, artifact_state: Literal["downloads", "unpack", "reduced"]) -> Path:
+        """Returns the path where SDK files are stored.
+
+        If a specific SDK version is not specified, the latest available version is used.
+
+        :returns: The SDK storage path.
+
+        """
+        if self.sdk_version is not None:
+            _, version_str = self.parse_sdk_version(self.sdk_version)
+            _sdk_path = self.cache_dir / artifact_state / f"SDK_{version_str}"
+            if not _sdk_path.exists():
+                raise PyxwinError("The SDK version is not yet downloaded.")
+            return _sdk_path
+
+        all_sdks = (self.cache_dir / artifact_state).glob("SDK_*")
+        if not all_sdks:
+            raise PyxwinError("No SDK versions found in cache directory.")
+
+        sdk_versions = [Version(x.name.removeprefix("SDK_")) for x in all_sdks]
+        latest_version = max(sdk_versions)
+
+        return self.cache_dir / artifact_state / f"SDK_{latest_version}"
+
+    @staticmethod
+    def parse_sdk_version(sdk_version: str) -> tuple[int, Version]:
+        """Parses the SDK version string into its components.
+
+        :returns: A tuple of (Windows version, SDK version) or None if no SDK version is specified.
+
+        """
+        regex = re.compile(r"^Win(\d+)SDK_(.+)")
+        m = regex.match(sdk_version)
+        if not m:
+            raise PyxwinError(f"Invalid SDK version string format: '{sdk_version}'")
+
+        win_ver = int(m.group(1))
+        version_str = m.group(2)
+
+        if version_str is None:
+            raise PyxwinError(f"Invalid SDK version string format: '{version_str}'")
+
+        try:
+            version = Version(version_str)
+        except InvalidVersion as err:
+            raise PyxwinError(f"Invalid SDK version: '{version_str}'") from err
+
+        return (win_ver, version)
 
 
 class ManifestPayload(BaseModel):

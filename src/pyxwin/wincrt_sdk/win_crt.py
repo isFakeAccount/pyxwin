@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from packaging.version import Version
 
-from pyxwin.core.pyxwin_exceptions import PyxwinError, UnsupportedPackageConfigurationError
+from pyxwin.core.pyxwin_exceptions import UnsupportedPackageConfigurationError
 from pyxwin.wincrt_sdk.manifest_datatypes import (
     CRTPayload,
     ManifestOptions,
@@ -84,16 +84,14 @@ async def get_toolchain_artifact(
         and (ver := extract_version(key)) is not None  # Force multiline
     ]
 
-    # Use the specified CRT version, if any, otherwise use the latest available.
-    crt_version: Version | None = None
+    # Use the specified CRT version
     if manifest_options.crt_version is not None:
         crt_version = Version(manifest_options.crt_version)
         if crt_version not in crt_version_rs_versions:
             raise UnsupportedPackageConfigurationError(f"Specified CRT version '{crt_version}' is not available.")
     else:
-        crt_version = max(crt_version_rs_versions, default=None)
-        if crt_version is None:
-            raise PyxwinError("Unable to find latest CRT version.")
+        # otherwise use the latest available.
+        crt_version = max(crt_version_rs_versions)
 
     header_id = f"Microsoft.VC.{crt_version}.CRT.Headers.base" if artifact_type == PayloadType.CRT_LIBS else f"Microsoft.VC.{crt_version}.ATL.Headers.base"
     pruned_crt_packages = {

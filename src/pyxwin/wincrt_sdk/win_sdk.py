@@ -2,41 +2,15 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
-
-from packaging.version import InvalidVersion, Version
 
 from pyxwin.core.pyxwin_exceptions import PyxwinError, PyxwinMissingPackageError, UnsupportedPackageConfigurationError
 from pyxwin.wincrt_sdk.manifest_datatypes import Architecture, ManifestItem, ManifestOptions, ManifestPayload, PayloadType, SDKPayload
 
 if TYPE_CHECKING:
+    from packaging.version import Version
+
     from pyxwin.wincrt_sdk.manifest_datatypes import PyxwinPackages
-
-
-def _parse_version_string(version_str: str | None) -> tuple[int, Version]:
-    """Parses a Windows SDK version string of the form 'Win<win_ver>SDK_<version>'."""
-    regex = re.compile(r"^Win(\d+)SDK_(.+)")
-
-    if not version_str:
-        raise PyxwinError("No SDK version string provided")
-
-    m = regex.match(version_str)
-    if not m:
-        raise PyxwinError(f"Invalid SDK version string format: '{version_str}'")
-
-    win_ver = int(m.group(1))
-    version_str = m.group(2)
-
-    if version_str is None:
-        raise PyxwinError(f"Invalid SDK version string format: '{version_str}'")
-
-    try:
-        version = Version(version_str)
-    except InvalidVersion as err:
-        raise PyxwinError(f"Invalid SDK version: '{version_str}'") from err
-
-    return (win_ver, version)
 
 
 def get_sdk_version(package_names: list[str], user_provided_sdk_version: str | None) -> tuple[str, Version]:
@@ -51,7 +25,7 @@ def get_sdk_version(package_names: list[str], user_provided_sdk_version: str | N
 
     """
     if user_provided_sdk_version:
-        win_ver, version = _parse_version_string(user_provided_sdk_version)
+        win_ver, version = ManifestOptions.parse_sdk_version(user_provided_sdk_version)
         sdk_key = f"Win{win_ver}SDK_{version}"
         return sdk_key, version
 
@@ -59,7 +33,7 @@ def get_sdk_version(package_names: list[str], user_provided_sdk_version: str | N
 
     for key in package_names:
         try:
-            win_ver, version = _parse_version_string(key)
+            win_ver, version = ManifestOptions.parse_sdk_version(key)
         except PyxwinError:
             continue
         else:

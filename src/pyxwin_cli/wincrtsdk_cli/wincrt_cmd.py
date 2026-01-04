@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path  # noqa: TC003 Typer needs Path here
 
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from pyxwin.core.pyxwin_exceptions import PyxwinError
 from pyxwin.wincrt_sdk.download_unpack import download_packages, unpack_files
 from pyxwin.wincrt_sdk.manifest_datatypes import Channel, ManifestOptions
 from pyxwin.wincrt_sdk.vs_manifest import load_channel_manifest, load_installer_manifest, prune_packages
@@ -34,12 +36,10 @@ VISUAL_STUDIO_2026_CHANNEL = 18
 
 
 @wincrt_app.command()
-def download() -> None:
-    """Downloads the specified Visual Studio component."""
-    print(f"Current manifest options: {manifest_options}")
-
+def download() -> list[Path]:
+    """Downloads all the packages specified based on the CLI options."""
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Fetching Visual Studio channel manifest...")
+        task = progress.add_task(f"Fetching Visual Studio channel manifest version {manifest_options.manifest_version}...")
         manifest_data = asyncio.run(load_channel_manifest(manifest_options))
         progress.update(task, completed=100)
 
@@ -54,14 +54,39 @@ def download() -> None:
         progress.update(task, completed=100)
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Downloading packages...")
+        task = progress.add_task(f"Downloading CRT {manifest_options.crt_version or 'latest'} & SDK {manifest_options.sdk_version or 'latest'}...")
         downloaded_file_paths = asyncio.run(download_packages(manifest_options, pruned_packages))
         progress.update(task, completed=100)
 
+    return downloaded_file_paths
+
+
+@wincrt_app.command()
+def unpack() -> None:
+    """Unpacks all the downloaded CRT & SDK packages. Downloads them first if not already present."""
+    try:
+        crt_packages_dir = list(manifest_options.get_crt_path("downloads").glob("*.vsix"))
+        sdk_packages_dir = list(manifest_options.get_sdk_path("downloads").glob("*.msi"))
+        downloaded_file_paths = crt_packages_dir + sdk_packages_dir
+    except PyxwinError:
+        downloaded_file_paths = download()
+
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Unpacking packages...")
-        asyncio.run(unpack_files(manifest_options, downloaded_file_paths))
+        task = progress.add_task(f"Unpacking CRT {manifest_options.crt_version or 'latest'} & SDK {manifest_options.sdk_version or 'latest'} packages...")
+        asyncio.run(main=unpack_files(manifest_options, downloaded_file_paths))
         progress.update(task, completed=100)
+
+
+@wincrt_app.command()
+def reduce() -> None:
+    """Combines all the CRT & SDK packages into a simple structure that can be easily linked against."""
+    try:
+        crt_packages_dir = manifest_options.get_crt_path("unpack")
+        sdk_packages_dir = manifest_options.get_sdk_path("unpack")
+    except PyxwinError:
+        unpack()
+        crt_packages_dir = manifest_options.get_crt_path("unpack")
+        sdk_packages_dir = manifest_options.get_sdk_path("unpack")
 
 
 @wincrt_app.callback()
