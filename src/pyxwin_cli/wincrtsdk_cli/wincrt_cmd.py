@@ -11,6 +11,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from pyxwin.core.pyxwin_exceptions import PyxwinError
 from pyxwin.wincrt_sdk.download_unpack import download_packages, unpack_files
 from pyxwin.wincrt_sdk.manifest_datatypes import Channel, ManifestOptions
+from pyxwin.wincrt_sdk.msft_file_operations import reduce_sdk_crt_files
 from pyxwin.wincrt_sdk.vs_manifest import load_channel_manifest, load_installer_manifest, prune_packages
 
 # Note: Typer needs these outside of TYPE_CHECKING block
@@ -87,6 +88,11 @@ def reduce() -> None:
         unpack()
         crt_packages_dir = manifest_options.get_crt_path("unpack")
         sdk_packages_dir = manifest_options.get_sdk_path("unpack")
+
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+        task = progress.add_task(f"Reducing CRT {manifest_options.crt_version or 'latest'} & SDK {manifest_options.sdk_version or 'latest'} packages...")
+        asyncio.run(reduce_sdk_crt_files(sdk_packages_dir, crt_packages_dir, manifest_options))
+        progress.update(task, completed=100)
 
 
 @wincrt_app.callback()

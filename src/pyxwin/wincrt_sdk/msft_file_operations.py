@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import shutil
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
 
     from pymsi.msi.directory import Directory
     from pymsi.thirdparty.refinery.cab import CabFolder
+
+    from pyxwin.wincrt_sdk.manifest_datatypes import ManifestOptions
 
 
 def _build_output_directory(output: Path, folder_name: str) -> Path:
@@ -147,8 +150,15 @@ def _extract_vsix(file_path: Path, extract_location: Path) -> None:
     :param extract_location: The directory to extract the VSIX file to.
 
     """
+    required_dirs = ("lib", "src", "include", "crt")
+
     with ZipFile(file_path, "r") as zip_ref:
-        zip_ref.extractall(extract_location)
+        files_to_extract = [
+            archive_path
+            for archive_path in zip_ref.namelist()  # Force line break
+            if any(required_dir in archive_path for required_dir in required_dirs)  # Force line break
+        ]
+        zip_ref.extractall(extract_location, files_to_extract)
 
 
 async def multi_extract_vsix_async(files: list[tuple[Path, Path]]) -> None:
@@ -164,3 +174,67 @@ async def multi_extract_vsix_async(files: list[tuple[Path, Path]]) -> None:
             task = loop.run_in_executor(executor, _extract_vsix, file_path, extract_location)
             tasks.append(task)
         await asyncio.gather(*tasks)
+
+
+async def reduce_crt_files(crt_packages_dir: Path, manifest_options: ManifestOptions) -> None:
+    """Reduces the extracted SDK and CRT files to only those necessary.
+
+    :param sdk_packages_dir: The directory where SDK packages are extracted.
+    :param crt_packages_dir: The directory where CRT packages are extracted.
+    :param manifest_options: The manifest options used for extraction.
+
+    """
+    crt_out_dir = manifest_options.cache_dir / "reduced" / crt_packages_dir.name
+    crt_subdirectories = {
+        "include": crt_out_dir / "include",
+        "lib": crt_out_dir / "lib",
+        "src": crt_out_dir / "src",
+        "crt": crt_out_dir / "crt",
+    }
+    for d in crt_subdirectories.values():
+        d.mkdir(parents=True, exist_ok=True)
+
+    from_dirs: list[Path] = []
+    for p in crt_packages_dir.rglob("*"):
+        if not p.is_dir() or p.name not in crt_subdirectories:
+            continue
+        from_dirs.append(p)
+
+    for from_dir in from_dirs:
+        to_dir = crt_subdirectories[from_dir.name]
+        shutil.copytree(from_dir, to_dir, dirs_exist_ok=True)
+
+
+async def reduce_sdk_files(sdk_packages_dir: Path, manifest_options: ManifestOptions) -> None:
+    """Reduces the extracted SDK files to only those necessary.
+
+    :param sdk_packages_dir: The directory where SDK packages are extracted.
+    :param manifest_options: The manifest options used for extraction.
+
+    """
+    sdk_out_dir = manifest_options.cache_dir / "reduced" / sdk_packages_dir.name
+    sdk_subdirectories = {
+        "include": sdk_out_dir / "include",
+        "lib": sdk_out_dir / "lib",
+        "source": sdk_out_dir / "source",
+        "bin": sdk_out_dir / "bin",
+    }
+    for d in sdk_subdirectories.values():
+        d.mkdir(parents=True, exist_ok=True)
+
+    from_dirs: list[Path] = []
+    for p in sdk_packages_dir.rglob("*"):
+        if not p.is_dir() or p.name not in sdk_subdirectories:
+            continue
+        from_dirs.append(p)
+
+    for from_dir in from_dirs:
+        to_dir = sdk_subdirectories[from_dir.name]
+        shutil.copytree(from_dir, to_dir, dirs_exist_ok=True)
+
+
+async def reduce_sdk_crt_files(sdk_packages_dir: Path, crt_packages_dir: Path, manifest_options: ManifestOptions) -> None:
+    """Reduces the extracted SDK and CRT files to only those necessary."""
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(reduce_sdk_files(sdk_packages_dir, manifest_options))
+        tg.create_task(reduce_crt_files(crt_packages_dir, manifest_options))
