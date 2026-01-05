@@ -20,16 +20,16 @@ def get_uv_python_dirs() -> list[Path]:
 
 def copy_python_dev_files(src_dir: Path, dest_root: Path) -> None:
     """Copy Python development files from src_dir to dest_root."""
-    include_dir = src_dir / "Include"
+    include_dir = src_dir / "include"
     libs_dir = src_dir / "libs"
     dlls = src_dir.glob("python*.dll")
     dll_paths = [src_dir / dll_name for dll_name in dlls]
 
     dest_root.mkdir(parents=True, exist_ok=True)
 
-    # Copy Include and libs
-    print(f"[INFO] Copying Include -> {dest_root / 'Include'}")
-    shutil.copytree(include_dir, dest_root / "Include", dirs_exist_ok=True)
+    # Copy include and libs
+    print(f"[INFO] Copying include -> {dest_root / 'include'}")
+    shutil.copytree(include_dir, dest_root / "include", dirs_exist_ok=True)
 
     print(f"[INFO] Copying libs -> {dest_root / 'libs'}")
     shutil.copytree(libs_dir, dest_root / "libs", dirs_exist_ok=True)
