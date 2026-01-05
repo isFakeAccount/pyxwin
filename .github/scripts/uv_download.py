@@ -19,7 +19,7 @@ def list_available_versions() -> list[str]:
 def install_python_version(python_version: str) -> None:
     """Installs the given python version using uv."""
     print(f"Installing {python_version}...")
-    subprocess.run(["uv", "python", "install", python_version], check=True)  # noqa: S607
+    subprocess.run(["uv", "python", "install", "--no-bin", python_version], check=True)  # noqa: S607
 
 
 def main() -> None:
