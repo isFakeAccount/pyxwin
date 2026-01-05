@@ -23,7 +23,7 @@ jobs:
         shell: pwsh
         run: |
           python -V
-          python .github/scripts/package_python.py
+          python .github/scripts/uv_download.py
 
       - name: Run packaging script
         run: python .github/scripts/package_python.py
