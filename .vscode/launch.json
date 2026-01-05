@@ -145,6 +145,13 @@
             "env": {
                 "PYXWIN_ACCEPT_LICENSE": "1"
             }
-        }
+        },
+        {
+            "name": "uv_download.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/.github/scripts/uv_download.py",
+            "console": "integratedTerminal"
+        },
     ]
 }

@@ -3,31 +3,28 @@
 
 from __future__ import annotations
 
-import argparse
 import shutil
-import sys
-import sysconfig
+import subprocess
+from concurrent.futures import ProcessPoolExecutor
+from os import cpu_count
 from pathlib import Path
 
 
-def main() -> None:
-    """Entry point."""
-    parser = argparse.ArgumentParser(description="Package Python dev files into a zip archive.")
-    parser.add_argument("--python-version", "-p", required=True, help="Python version (e.g., 3.12.0)")
-    parser.add_argument("--arch", "-a", required=True, help="Architecture (e.g., x64, arm64)")
-    args = parser.parse_args()
+def get_uv_python_dirs() -> list[Path]:
+    """Get paths of all the python installations by uv."""
+    result = subprocess.run(["uv", "python", "dir"], capture_output=True, text=True, check=True)  # noqa: S607
+    python_dir = Path(result.stdout.strip())
+    cpython_installation_dirs = python_dir.glob("cpython-*")
+    return list(cpython_installation_dirs)
 
-    prefix = Path(sys.prefix)
-    include_dir = Path(sysconfig.get_path("include"))
-    libs_dir = prefix / "libs"
 
-    dlls = [
-        f"python{sys.version_info.major}.dll",  # stable ABI (abi3)
-        f"python{sys.version_info.major}{sys.version_info.minor}.dll",  # full ABI
-    ]
-    dll_paths = [prefix / dll_name for dll_name in dlls]
+def copy_python_dev_files(src_dir: Path, dest_root: Path) -> None:
+    """Copy Python development files from src_dir to dest_root."""
+    include_dir = src_dir / "Include"
+    libs_dir = src_dir / "libs"
+    dlls = src_dir.glob("python*.dll")
+    dll_paths = [src_dir / dll_name for dll_name in dlls]
 
-    dest_root = Path(f"dist/python-{args.python_version}-{args.arch}-windows")
     dest_root.mkdir(parents=True, exist_ok=True)
 
     # Copy Include and libs
@@ -44,6 +41,17 @@ def main() -> None:
             shutil.copy2(dll_path, dest_root / dll_path.name)
         else:
             print(f"[WARN] DLL not found: {dll_path}")
+
+
+def main() -> None:
+    """Entry point."""
+    cpython_installation_dirs = get_uv_python_dirs()
+
+    num_cores = cpu_count() or 1
+    with ProcessPoolExecutor(max_workers=num_cores * 2) as executor:
+        for cpython_dir in cpython_installation_dirs:
+            dest_root = Path("dist") / cpython_dir.name
+            executor.submit(copy_python_dev_files, cpython_dir, dest_root)
 
 
 if __name__ == "__main__":
