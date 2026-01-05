@@ -10,16 +10,22 @@ from os import cpu_count
 
 def list_available_versions() -> list[str]:
     """Gets the list of available python version using the ``uv python list`` command."""
-    result = subprocess.run(["uv", "python", "list", "--all-arches"], check=True, capture_output=True, text=True)  # noqa: S607
+    result = subprocess.run(
+        ["uv", "python", "list", "--all-platforms", "--all-arches"],  # noqa: S607
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
     raw_lines = result.stdout.splitlines()
-    return [raw_line.split()[0] for raw_line in raw_lines if raw_line.startswith("cpython")]
+    cpython_versions = [raw_line.split()[0] for raw_line in raw_lines if raw_line.startswith("cpython")]
+    return [version for version in cpython_versions if "windows" in version]
 
 
 def install_python_version(python_version: str) -> None:
     """Installs the given python version using uv."""
     print(f"Installing {python_version}...")
-    subprocess.run(["uv", "python", "install", "--no-bin", python_version], check=True)  # noqa: S607
+    subprocess.run(["uv", "python", "install", python_version], check=True)  # noqa: S607
 
 
 def main() -> None:
