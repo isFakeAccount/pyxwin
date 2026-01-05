@@ -50,7 +50,15 @@ def main() -> None:
     num_cores = cpu_count() or 1
     with ProcessPoolExecutor(max_workers=num_cores * 2) as executor:
         for cpython_dir in cpython_installation_dirs:
-            dest_root = Path("dist") / cpython_dir.name
+            if "x86_64" in cpython_dir.name:
+                arch_dir_name = "x86_64"
+            elif "x86" in cpython_dir.name:
+                arch_dir_name = "x86"
+            elif "aarch64" in cpython_dir.name:
+                arch_dir_name = "aarch64"
+            else:
+                arch_dir_name = "unknown_arch"
+            dest_root = Path("dist") / arch_dir_name / cpython_dir.name
             executor.submit(copy_python_dev_files, cpython_dir, dest_root)
 
 

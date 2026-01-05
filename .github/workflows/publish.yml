@@ -19,10 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all build artifacts
-        uses: dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@v12
         with:
           workflow: "windows-python-dev-kit.yml"
-          path: dist/
           skip_unpack: true
 
       - name: Create or update release

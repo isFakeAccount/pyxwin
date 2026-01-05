@@ -5,10 +5,7 @@ on:
 
 jobs:
   package-python-dev:
-    strategy:
-      matrix:
-        arch: [x64, x86, arm64]
-    runs-on: ${{ matrix.arch == 'arm64' && 'windows-11-arm' || 'windows-latest' }}
+    runs-on: ${{ 'windows-latest' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -17,7 +14,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
 
       - name: Download all Python versions using uv
         shell: pwsh
@@ -28,9 +25,23 @@ jobs:
       - name: Run packaging script
         run: python .github/scripts/package_python.py
 
-      - name: Upload dev archive
-        uses: actions/upload-artifact@v4
+      - name: Upload x86_64 artifacts
+        uses: actions/upload-artifact@v6
         with:
-          name: python-windows-${{ matrix.arch }}
-          path: dist/*
+          name: python-windows-x86_64
+          path: dist/x86_64/
+          overwrite: true
+
+      - name: Upload x86 artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-windows-x86
+          path: dist/x86/
+          overwrite: true
+
+      - name: Upload aarch64 artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-windows-aarch64
+          path: dist/aarch64/
           overwrite: true

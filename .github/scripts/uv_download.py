@@ -10,7 +10,7 @@ from os import cpu_count
 
 def list_available_versions() -> list[str]:
     """Gets the list of available python version using the ``uv python list`` command."""
-    result = subprocess.run(["uv", "python", "list"], check=True, capture_output=True, text=True)  # noqa: S607
+    result = subprocess.run(["uv", "python", "list", "--all-arches"], check=True, capture_output=True, text=True)  # noqa: S607
 
     raw_lines = result.stdout.splitlines()
     return [raw_line.split()[0] for raw_line in raw_lines if raw_line.startswith("cpython")]
@@ -27,7 +27,7 @@ def main() -> None:
     cpython_versions = list_available_versions()
 
     num_cores = cpu_count() or 1
-    with ProcessPoolExecutor(max_workers=num_cores * 2) as executor:
+    with ProcessPoolExecutor(max_workers=num_cores * 4) as executor:
         for cpython_version in cpython_versions:
             executor.submit(install_python_version, cpython_version)
 
