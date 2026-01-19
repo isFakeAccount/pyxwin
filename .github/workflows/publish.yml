@@ -27,14 +27,20 @@ jobs:
         run: |
           echo "tag=$(date -u +'%Y-%m-%dT%H-%M-%SZ')" >> "$GITHUB_OUTPUT"
 
+      - name: Generate checksum
+        run: |
+          cd dist
+          sha256sum *.zip > checksum.sha256
+          cat checksum.sha256
+
       - name: Create or update release
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.iso.outputs.tag }}
           name: ${{ steps.iso.outputs.tag }}
           body: ${{ github.event.inputs.release-notes }}
           draft: false
           prerelease: false
-          files: dist/*.zip
+          files: dist/*
           overwrite_files: true
           make_latest: true
