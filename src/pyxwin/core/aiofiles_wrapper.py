@@ -138,8 +138,9 @@ async def stream_download_and_hash(url: str, file_path: Path, target_sha256: str
             if progress is not None:
                 task_id = progress.add_task(f"Downloading {file_path.name}...", total=total)
 
+            chunk_size = 1024 * 1024
             async with aiofiles.open(file_path, "wb") as fp:
-                async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
+                async for chunk in response.aiter_bytes(chunk_size=chunk_size):
                     hasher.update(chunk)
                     await fp.write(chunk)
 

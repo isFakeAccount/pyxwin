@@ -7,7 +7,7 @@ from pathlib import Path  # noqa: TC003 Typer needs Path here
 
 import questionary
 import typer
-from rich.progress import BarColumn, DownloadColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from rich.table import Column
 
 from pyxwin.wincrt_sdk.download_unpack import download_packages, unpack_files
@@ -55,7 +55,7 @@ def download() -> list[Path]:
         TextColumn("[progress.description]{task.description}", table_column=Column(width=80, no_wrap=True)),
         BarColumn(),
         TaskProgressColumn(),
-        DownloadColumn(),
+        TaskProgressColumn(),
         transient=True,
     ) as progress:
         downloaded_file_paths = asyncio.run(download_packages(manifest_options, workload_payloads, progress))
@@ -133,8 +133,7 @@ def unpack() -> None:
 def reduce() -> None:
     """Combines all the CRT & SDK packages into a simple structure that can be easily linked against."""
     unpack_directory = manifest_options.cache_dir / "unpack" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
-    if not unpack_directory.exists():
-        unpack()
+    unpack()
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         task = progress.add_task("Reducing workload packages...")
@@ -158,7 +157,7 @@ def app_callback(
         accept = questionary.confirm(
             "Do you accept the Microsoft Software License Terms at "
             "(https://codeberg.org/YoshikageKira/pyxwin/src/branch/master/LICENSES/LICENSE-Microsoft-Build-Tools.md)?",
-            default=False,
+            default=True,
             auto_enter=False,
         ).ask()
         if not accept:
