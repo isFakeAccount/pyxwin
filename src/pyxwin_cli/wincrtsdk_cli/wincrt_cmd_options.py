@@ -7,7 +7,7 @@ from typing import Annotated
 
 import typer
 
-from pyxwin.wincrt_sdk.manifest_datatypes import Architecture, Channel, Variant
+from pyxwin.wincrt_sdk.manifest_datatypes import Channel, ManifestVersion
 
 accept_license_opt = Annotated[
     bool,
@@ -37,52 +37,13 @@ cache_dir_opt = Annotated[
     ),
 ]
 
-manifest_version_opt = Annotated[int, typer.Option(help="Specifies the version of the VS manifest to use.")]
+manifest_version_opt = Annotated[ManifestVersion, typer.Option(help="Specifies the version of the VS manifest to use.")]
 
 channel_opt = Annotated[Channel, typer.Option(help="Specifies the VS channel to use.")]
 
-arch_opt = Annotated[
-    list[Architecture],
+workloads_opt = Annotated[
+    list[str],
     typer.Option(
-        "--arch",
-        "-a",
-        help="Specifies the system architecture to use when downloading build tools. Can be specified multiple times for multiple architectures.",
-    ),
-]
-
-variant_opt = Annotated[
-    list[Variant],
-    typer.Option(
-        "--variant",
-        "-v",
-        help="Specifies the Windows variant to target when downloading build tools. Can be specified multiple times for multiple variants.",
-    ),
-]
-
-crt_version_opt = Annotated[
-    str | None,
-    typer.Option(
-        help="Specifies the version of the Windows CRT to download (e.g., '14.44.17.14'). If not specified, the latest version will be used.",
-    ),
-]
-
-sdk_version_opt = Annotated[
-    str | None,
-    typer.Option(
-        help="Specifies the version of the Windows SDK to download (e.g., '10.0.26100'). If not specified, the latest version will be used.",
-    ),
-]
-
-include_atl_opt = Annotated[
-    bool,
-    typer.Option(
-        help="Includes the Active Template Library (ATL) in the installation libraries when downloading the Windows CRT.",
-    ),
-]
-
-include_spectre_opt = Annotated[
-    bool,
-    typer.Option(
-        help="Includes the Spectre variant in the installation libraries when downloading the Windows CRT.",
+        help="Specifies the Visual Studio workloads to install. Can be specified multiple times for multiple workloads.",
     ),
 ]

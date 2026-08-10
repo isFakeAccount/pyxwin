@@ -7,29 +7,25 @@ from urllib.parse import quote
 
 from pydantic import TypeAdapter
 
-from pyxwin.core.aiofiles_wrapper import async_read_text, async_write_text
-from pyxwin.core.https_client import fetch_file
+from pyxwin.core.aiofiles_wrapper import async_read_text, async_write_text, fetch_file
 from pyxwin.core.pyxwin_exceptions import MalformedJsonError
 from pyxwin.wincrt_sdk.manifest_datatypes import (
-    CRTPayload,
+    Architecture,
     ItemType,
-    ManifestItem,
-    ManifestOptions,
-    PayloadType,
     PyxwinPackages,
-    SDKPayload,
-    VisualStudioManifest,
+    VisualStudioChannelManifest,
+    VisualStudioChannelManifestItem,
+    VisualStudioInstallerManifest,
+    VisualStudioInstallerOptions,
 )
-from pyxwin.wincrt_sdk.win_crt import get_toolchain_artifact
-from pyxwin.wincrt_sdk.win_sdk import get_sdk
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from pyxwin.wincrt_sdk.manifest_datatypes import ManifestOptions
+    from pyxwin.wincrt_sdk.manifest_datatypes import VisualStudioInstallerOptions
 
 
-async def _fetch_channel_manifest(manifest_options: ManifestOptions) -> VisualStudioManifest:
+async def _fetch_channel_manifest(manifest_options: VisualStudioInstallerOptions) -> VisualStudioChannelManifest:
     """Fetches or reads existing a Visual Studio channel manifest based on the provided options.
 
     The function also saves the file to cache dir to speed up the process.
@@ -53,10 +49,10 @@ async def _fetch_channel_manifest(manifest_options: ManifestOptions) -> VisualSt
 
     await async_write_text(dest_path, channel_manifest_text)
 
-    return TypeAdapter(VisualStudioManifest).validate_json(channel_manifest_text)
+    return TypeAdapter(VisualStudioChannelManifest).validate_json(channel_manifest_text)
 
 
-async def load_channel_manifest(manifest_options: ManifestOptions) -> VisualStudioManifest:
+async def load_channel_manifest(manifest_options: VisualStudioInstallerOptions) -> VisualStudioChannelManifest:
     """Loads the Visual Studio manifest from the specified path or fetches it if not provided.
 
     :param manifest_options: Configuration options for loading the manifest.
@@ -68,15 +64,15 @@ async def load_channel_manifest(manifest_options: ManifestOptions) -> VisualStud
         channel_manifest = await _fetch_channel_manifest(manifest_options)
     else:
         channel_manifest_text = await async_read_text(manifest_options.channel_manifest_path)
-        channel_manifest = TypeAdapter(VisualStudioManifest).validate_json(channel_manifest_text)
+        channel_manifest = TypeAdapter(VisualStudioChannelManifest).validate_json(channel_manifest_text)
 
     return channel_manifest
 
 
-async def _fetch_installer_manifest(vs_installer_manifest_packages: list[ManifestItem], dest_path: Path) -> VisualStudioManifest:
+async def _fetch_installer_manifest(vs_channel_manifest_items: list[VisualStudioChannelManifestItem], dest_path: Path) -> VisualStudioInstallerManifest:
     """Fetches the Visual Studio installer manifest from the channel manifest and saves it to the specified path.
 
-    :param vs_installer_manifest_packages: List of manifest items from the channel manifest.
+    :param vs_channel_manifest_items: List of manifest items from the channel manifest.
     :param dest_path: Path to save the fetched installer manifest.
 
     :returns: The fetched installer manifest as a VisualStudioManifest.
@@ -85,7 +81,7 @@ async def _fetch_installer_manifest(vs_installer_manifest_packages: list[Manifes
 
     """
     installer_manifest_metadata = None
-    for channel_item in vs_installer_manifest_packages:
+    for channel_item in vs_channel_manifest_items:
         if channel_item.type == ItemType.MANIFEST:
             installer_manifest_metadata = channel_item
             break
@@ -101,10 +97,10 @@ async def _fetch_installer_manifest(vs_installer_manifest_packages: list[Manifes
     installer_manifest_text = await fetch_file(installer_manifest_url)
     await async_write_text(dest_path, installer_manifest_text)
 
-    return TypeAdapter(VisualStudioManifest).validate_json(installer_manifest_text)
+    return TypeAdapter(VisualStudioInstallerManifest).validate_json(installer_manifest_text)
 
 
-async def load_installer_manifest(vs_channel_manifest: VisualStudioManifest, manifest_options: ManifestOptions) -> PyxwinPackages:
+async def load_installer_manifest(vs_channel_manifest: VisualStudioChannelManifest, manifest_options: VisualStudioInstallerOptions) -> PyxwinPackages:
     """Fetches and loads the Visual Studio installer manifest from channel manifest and returns it as a PyxwinPackages.
 
     PyxwinPackages converts the list of packages into a dictionary format with package IDs as keys. This allows for
@@ -130,48 +126,25 @@ async def load_installer_manifest(vs_channel_manifest: VisualStudioManifest, man
         installer_manifest = await _fetch_installer_manifest(vs_installer_manifest_packages, dest_path)
     else:
         installer_manifest_text = await async_read_text(dest_path)
-        installer_manifest = TypeAdapter(VisualStudioManifest).validate_json(installer_manifest_text)
+        installer_manifest = TypeAdapter(VisualStudioInstallerManifest).validate_json(installer_manifest_text)
 
     if installer_manifest.packages is None:
         raise MalformedJsonError("Packages missing in installer manifest.")
 
-    packages_dict = PyxwinPackages({})
-    for pkg in installer_manifest.packages:
-        if pkg.id not in packages_dict:
-            packages_dict[pkg.id] = [pkg]
+    pyxwin_packages: PyxwinPackages = {}
+    for package in installer_manifest.packages:
+        if package.chip:
+            pkg_arch = package.chip
+        elif package.product_arch:
+            pkg_arch = package.product_arch
         else:
-            packages_dict[pkg.id].append(pkg)
-    return packages_dict
+            pkg_arch = Architecture.NEUTRAL
 
+        pkg_id = package.id
 
-async def prune_packages(
-    pyxwin_packages: PyxwinPackages,
-    manifest_options: ManifestOptions,
-) -> dict[str, SDKPayload | CRTPayload]:
-    """Prunes the packages from the packages manifest based on the user input.
+        if pkg_id not in pyxwin_packages:
+            pyxwin_packages[pkg_id] = {}
 
-    :param pyxwin_packages: Dictionary mapping package IDs to lists of packages.
-    :param manifest_options: Options that control how packages are pruned.
+        pyxwin_packages[pkg_id][pkg_arch] = package
 
-    :returns: A list of pruned CRTPayloads and SDKPayloads based on the user input.
-
-    """
-    crt_payloads = await get_toolchain_artifact(
-        pyxwin_packages,
-        manifest_options,
-        PayloadType.CRT_LIBS,
-    )
-
-    atl_payloads = (
-        await get_toolchain_artifact(
-            pyxwin_packages,
-            manifest_options,
-            PayloadType.ATL_LIBS,
-        )
-        if manifest_options.include_atl
-        else {}
-    )
-
-    sdk_payloads = await get_sdk(pyxwin_packages, manifest_options)
-
-    return crt_payloads | atl_payloads | sdk_payloads
+    return pyxwin_packages

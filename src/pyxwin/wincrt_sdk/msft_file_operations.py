@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pymsi.msi.directory import Directory
     from pymsi.thirdparty.refinery.cab import CabFolder
 
-    from pyxwin.wincrt_sdk.manifest_datatypes import ManifestOptions
+    from pyxwin.wincrt_sdk.manifest_datatypes import VisualStudioInstallerOptions
 
 
 def _build_output_directory(output: Path, folder_name: str) -> Path:
@@ -36,29 +36,9 @@ def _build_output_directory(output: Path, folder_name: str) -> Path:
         # Use lowercase for these like sane people.
         folder_name = folder_name.lower()
         output_path_bld = output / folder_name
-    elif folder_name[0].isdigit() or folder_name.isdigit():
-        # Skips the versioned folders like 10.0.10240.0, 10, 11, etc.
-        output_path_bld = output
-    elif folder_name in ("ProgramFilesFolder", "Windows Kits"):
-        # Skip these directories in final path.
-        output_path_bld = output
     else:
         output_path_bld = output / folder_name
     return output_path_bld
-
-
-# These directories are not needed for CRT/SDK extraction.
-DIRS_TO_SKIP = (
-    "AccChecker",
-    "AccScope",
-    "AppPerfAnalyzer",
-    "Catalogs",
-    "DesignTime",
-    "en-US",
-    "SecureBoot",
-    "UIAVerify",
-    "XamlDiagnostics",
-)
 
 
 def _extract_root(root: Directory, output: Path, is_root: bool = True) -> None:
@@ -94,11 +74,15 @@ def _extract_root(root: Directory, output: Path, is_root: bool = True) -> None:
             else:
                 folder_name = child.id
 
-        if folder_name in DIRS_TO_SKIP:
-            continue
-
         output_path_bld = _build_output_directory(output, folder_name)
         _extract_root(child, output_path_bld, False)
+
+
+def should_extract_package(file_path: Path) -> bool:
+    """Whether this MSI's payload is relevant to compiling/linking a full Win32 app."""
+    name = file_path.stem
+
+    return "headers" in name.lower() or "libs" in name.lower()
 
 
 def _extract_msi(file_path: Path, extract_location: Path) -> None:
@@ -176,65 +160,29 @@ async def multi_extract_vsix_async(files: list[tuple[Path, Path]]) -> None:
         await asyncio.gather(*tasks)
 
 
-async def reduce_crt_files(crt_packages_dir: Path, manifest_options: ManifestOptions) -> None:
-    """Reduces the extracted SDK and CRT files to only those necessary.
+def reduce_unpacked_files(unpacked_dir: Path, manifest_options: VisualStudioInstallerOptions) -> None:
+    """Reduces the unpacked dir to essential files for compiling/linking."""
+    reduce_dir = manifest_options.cache_dir / "reduce" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
 
-    :param sdk_packages_dir: The directory where SDK packages are extracted.
-    :param crt_packages_dir: The directory where CRT packages are extracted.
-    :param manifest_options: The manifest options used for extraction.
+    msvc_dirs = unpacked_dir.glob("VC/Tools/MSVC/*")
+    for msvc_dir in msvc_dirs:
+        msvc_version = msvc_dir.name
+        msvc_out = reduce_dir / f"msvc-{msvc_version}"
 
-    """
-    crt_out_dir = manifest_options.cache_dir / "reduced" / crt_packages_dir.name
-    crt_subdirectories = {
-        "include": crt_out_dir / "include",
-        "lib": crt_out_dir / "lib",
-        "src": crt_out_dir / "src",
-        "crt": crt_out_dir / "crt",
-    }
-    for d in crt_subdirectories.values():
-        d.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(msvc_dir / "include", msvc_out / "include", dirs_exist_ok=True)
+        shutil.copytree(msvc_dir / "lib", msvc_out / "lib", dirs_exist_ok=True)
 
-    from_dirs: list[Path] = []
-    for p in crt_packages_dir.rglob("*"):
-        if not p.is_dir() or p.name not in crt_subdirectories:
-            continue
-        from_dirs.append(p)
+        if (msvc_dir / "atlmfc").exists():
+            shutil.copytree(msvc_dir / "atlmfc/include", msvc_out / "atlmfc/include", dirs_exist_ok=True)
+            shutil.copytree(msvc_dir / "atlmfc/lib", msvc_out / "atlmfc/lib", dirs_exist_ok=True)
 
-    for from_dir in from_dirs:
-        to_dir = crt_subdirectories[from_dir.name]
-        shutil.copytree(from_dir, to_dir, dirs_exist_ok=True)
+    sdk_root = unpacked_dir / "ProgramFilesFolder" / "Windows Kits" / "10"
+    sdk_include_dirs = list((sdk_root / "include").glob("*"))
 
+    for sdk_include_dir in sdk_include_dirs:
+        sdk_version = sdk_include_dir.name
+        sdk_lib_dir = sdk_root / "lib" / sdk_version
+        sdk_out = reduce_dir / f"sdk-{sdk_version}"
 
-async def reduce_sdk_files(sdk_packages_dir: Path, manifest_options: ManifestOptions) -> None:
-    """Reduces the extracted SDK files to only those necessary.
-
-    :param sdk_packages_dir: The directory where SDK packages are extracted.
-    :param manifest_options: The manifest options used for extraction.
-
-    """
-    sdk_out_dir = manifest_options.cache_dir / "reduced" / sdk_packages_dir.name
-    sdk_subdirectories = {
-        "include": sdk_out_dir / "include",
-        "lib": sdk_out_dir / "lib",
-        "source": sdk_out_dir / "source",
-        "bin": sdk_out_dir / "bin",
-    }
-    for d in sdk_subdirectories.values():
-        d.mkdir(parents=True, exist_ok=True)
-
-    from_dirs: list[Path] = []
-    for p in sdk_packages_dir.rglob("*"):
-        if not p.is_dir() or p.name not in sdk_subdirectories:
-            continue
-        from_dirs.append(p)
-
-    for from_dir in from_dirs:
-        to_dir = sdk_subdirectories[from_dir.name]
-        shutil.copytree(from_dir, to_dir, dirs_exist_ok=True)
-
-
-async def reduce_sdk_crt_files(sdk_packages_dir: Path, crt_packages_dir: Path, manifest_options: ManifestOptions) -> None:
-    """Reduces the extracted SDK and CRT files to only those necessary."""
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(reduce_sdk_files(sdk_packages_dir, manifest_options))
-        tg.create_task(reduce_crt_files(crt_packages_dir, manifest_options))
+        shutil.copytree(sdk_include_dir, sdk_out / "include", dirs_exist_ok=True)
+        shutil.copytree(sdk_lib_dir, sdk_out / "lib", dirs_exist_ok=True)

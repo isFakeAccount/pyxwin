@@ -1,6 +1,6 @@
 # pyxwin
 
-A utility for downloading and packaging the Python, Microsoft CRT, Windows SDK headers and libraries needed for compiling and linking python extension modules targeting Windows.
+A utility for downloading Visual Studio Workloads.
 
 The project is inspired by the rust based [xwin](https://github.com/Jake-Shadle/xwin) cargo package in python.
 
@@ -15,64 +15,42 @@ The goal is to let Python users download Python, Microsoft CRT and Windows SDK t
 
 The directory structure created by this tool is as follows:
 
-```text
-.pyxwin-cache/
-- manifest_<version>
-  - <channel_name>
-    - vs_channel_manifest.json
-    - vs_installer_manifest.json 
-- downloads
-  - CRT_<Version>
-    - ...
-  - SDK_<Version>
-    - ...
-- unpack
-  - CRT_<Version>
-    - ...
-  - SDK_<Version>
-    - ...
-- reduced
-  - CRT_<Version>
-    - include
-    - desktop
-      - x86
-      - x86_64
-      - arm
-      - arm64
-    - onecore
-      - x86
-      - x86_64
-      - arm
-      - arm64
-    - spectre
-      - desktop
-        - x86
-        - x86_64
-        - arm
-        - arm64
-      - onecore
-        - x86
-        - x86_64
-        - arm
-        - arm64
-  - SDK_<Version>
-    - include
-      - ucrt
-      - shared
-      - um
-      - winrt
-      - cppwinrt
-    - lib
-      - ucrt
-        - x86
-        - x86_64
-        - arm
-        - arm64
-      - usermode
-        - x86
-        - x86_64
-        - arm
-        - arm64
+```
+.pyxwin-cache:/
+├── manifest_<version>:/
+│   └── <channel_name>:/
+│       ├── vs_channel_manifest.json
+│       └── vs_installer_manifest.json
+├── downloads:/
+│   └── <workload_name>:/
+│       └── <architecture>:/
+│           └── ...
+├── unpack:/
+│   └── manifest_<version>:/
+│       └── <channel_name>:/
+│           └── ...
+└── reduced:/
+    └── manifest_<version>:/
+        └── <channel_name>:/
+            ├── msvc-<version>:/
+            │   ├── include:/
+            │   │   └── ...
+            │   └── lib:/
+            │       └── <architecture>:/
+            │           └── ...
+            └── sdk-<version>:/
+                ├── include:/
+                │   └── ...
+                └── lib:/
+                    ├── ucrt:/
+                    │   └── <architecture>:/
+                    │       └── ...
+                    ├── ucrt_enclave:/
+                    │   └── <architecture>:/
+                    │       └── ...
+                    └── um:/
+                        └── <architecture>:/
+                            └── ...
 ```
 
 Where `<Version>` is the version of the CRT or SDK downloaded.
