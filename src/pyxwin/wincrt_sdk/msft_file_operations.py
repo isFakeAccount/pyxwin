@@ -160,6 +160,15 @@ async def multi_extract_vsix_async(files: list[tuple[Path, Path]]) -> None:
         await asyncio.gather(*tasks)
 
 
+def _copy_tree(src: Path, dst: Path) -> None:
+    """Copies a directory tree, replacing dst entirely if it already exists. Preserves symlinks."""
+    if not src.exists():
+        return
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst, symlinks=True)
+
+
 def reduce_unpacked_files(unpacked_dir: Path, manifest_options: VisualStudioInstallerOptions) -> None:
     """Reduces the unpacked dir to essential files for compiling/linking."""
     reduce_dir = manifest_options.cache_dir / "reduce" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
@@ -169,12 +178,12 @@ def reduce_unpacked_files(unpacked_dir: Path, manifest_options: VisualStudioInst
         msvc_version = msvc_dir.name
         msvc_out = reduce_dir / f"msvc-{msvc_version}"
 
-        shutil.copytree(msvc_dir / "include", msvc_out / "include", dirs_exist_ok=True)
-        shutil.copytree(msvc_dir / "lib", msvc_out / "lib", dirs_exist_ok=True)
+        _copy_tree(msvc_dir / "include", msvc_out / "include")
+        _copy_tree(msvc_dir / "lib", msvc_out / "lib")
 
         if (msvc_dir / "atlmfc").exists():
-            shutil.copytree(msvc_dir / "atlmfc/include", msvc_out / "atlmfc/include", dirs_exist_ok=True)
-            shutil.copytree(msvc_dir / "atlmfc/lib", msvc_out / "atlmfc/lib", dirs_exist_ok=True)
+            _copy_tree(msvc_dir / "atlmfc" / "include", msvc_out / "atlmfc" / "include")
+            _copy_tree(msvc_dir / "atlmfc" / "lib", msvc_out / "atlmfc" / "lib")
 
     sdk_root = unpacked_dir / "ProgramFilesFolder" / "Windows Kits" / "10"
     sdk_include_dirs = list((sdk_root / "include").glob("*"))
@@ -184,5 +193,5 @@ def reduce_unpacked_files(unpacked_dir: Path, manifest_options: VisualStudioInst
         sdk_lib_dir = sdk_root / "lib" / sdk_version
         sdk_out = reduce_dir / f"sdk-{sdk_version}"
 
-        shutil.copytree(sdk_include_dir, sdk_out / "include", dirs_exist_ok=True)
-        shutil.copytree(sdk_lib_dir, sdk_out / "lib", dirs_exist_ok=True)
+        _copy_tree(sdk_include_dir, sdk_out / "include")
+        _copy_tree(sdk_lib_dir, sdk_out / "lib")

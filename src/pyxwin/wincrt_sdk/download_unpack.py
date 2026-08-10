@@ -6,6 +6,7 @@ import asyncio
 import json
 import shutil
 from pathlib import Path
+from platform import system
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -152,6 +153,9 @@ async def unpack_files(manifest_options: VisualStudioInstallerOptions, file_path
 
         _copy_unpacked_files(unpack_dir, unpack_temp_dir_path)
 
+        if system() != "Windows":
+            _symlink_mixed_case_to_lower_case(unpack_dir)
+
 
 def _copy_unpacked_files(unpack_dir: Path, unpack_temp_dir_path: Path) -> None:
     """Copies unpacked files from the temporary directory to the final unpack directory.
@@ -172,3 +176,31 @@ def _copy_unpacked_files(unpack_dir: Path, unpack_temp_dir_path: Path) -> None:
             content_dir = package_dir / "Contents"
             src = content_dir if content_dir.exists() else package_dir
             shutil.copytree(src, unpack_dir, dirs_exist_ok=True)
+
+
+def is_mixed_case(text: str) -> bool:
+    """Checks if a given text is mixed case.
+
+    :param text: The text to check.
+
+    :returns: True if the text is mixed case, False otherwise.
+
+    """
+    return not text.islower() and not text.isupper()
+
+
+def _symlink_mixed_case_to_lower_case(unpack_dir: Path) -> None:
+    """Creates symlinks for mixed-case directories to their lower-case equivalents.
+
+    This is necessary because some tools may expect lower-case directory names, while others may use mixed-case names.
+
+    :param unpack_dir: The path to the unpacked directory.
+
+    """
+    for file_path in unpack_dir.rglob("*"):
+        if file_path.suffix.lower() not in {".h", ".hpp", ".hxx", ".inl"}:
+            continue
+        if is_mixed_case(file_path.name):
+            lower_case_file_path = file_path.with_name(file_path.name.lower())
+            if not lower_case_file_path.exists():
+                lower_case_file_path.symlink_to(file_path.name)

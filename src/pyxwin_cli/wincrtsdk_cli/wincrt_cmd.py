@@ -118,7 +118,9 @@ def unpack() -> None:
     download_directory = manifest_options.cache_dir / "downloads" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
     download()
 
-    for workload_dir in download_directory.iterdir():
+    for workload_name in manifest_options.workloads:
+        workload_dir = download_directory / workload_name
+
         crt_packages_dir = list(workload_dir.rglob("*.vsix"))
         sdk_packages_dir = list(workload_dir.rglob("*.msi"))
         downloaded_file_paths = crt_packages_dir + sdk_packages_dir

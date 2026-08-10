@@ -177,5 +177,5 @@ class VisualStudioInstallerOptions(BaseModel, validate_assignment=True):
             channel_manifest_path=None,
             channel=Channel.STABLE,
             manifest_version=ManifestVersion.VS2026,
-            workloads=["Microsoft.VisualStudio.Workload.VCTools"],
+            workloads=[],
         )
