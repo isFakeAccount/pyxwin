@@ -68,9 +68,7 @@ def _extract_root(root: Directory, output: Path, is_root: bool = True) -> None:
         folder_name = child.name
         if is_root:
             if "." in child.id:
-                folder_name, guid = child.id.split(".", 1)
-                if child.id != folder_name:
-                    print(f"Warning: Directory ID '{child.id}' has a GUID suffix ({guid}).")
+                folder_name, _ = child.id.split(".", 1)
             else:
                 folder_name = child.id
 
