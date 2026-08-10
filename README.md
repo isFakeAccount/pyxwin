@@ -1,6 +1,6 @@
 # pyxwin
 
-A utility for downloading Visual Studio Workloads.
+A utility for downloading Visual Studio Workloads on non-Windows OS for cross compiling Windows apps and libraries.
 
 The project is inspired by the rust based [xwin](https://github.com/Jake-Shadle/xwin) cargo package in python.
 
