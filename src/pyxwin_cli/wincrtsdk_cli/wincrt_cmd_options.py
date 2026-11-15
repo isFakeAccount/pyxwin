@@ -27,21 +27,11 @@ manifest_opt = Annotated[
     ),
 ]
 
-cache_dir_opt = Annotated[
-    Path,
-    typer.Option(
-        help="Specifies a custom cache directory for pyxwin to use, rather than the default platform-specific cache directory.",
-        dir_okay=True,
-        file_okay=False,
-        resolve_path=True,
-    ),
-]
-
 manifest_version_opt = Annotated[ManifestVersion, typer.Option(help="Specifies the version of the VS manifest to use.")]
 
 channel_opt = Annotated[Channel, typer.Option(help="Specifies the VS channel to use.")]
 
-workloads_opt = Annotated[
+workload_opt = Annotated[
     list[str],
     typer.Option(
         help="Specifies the Visual Studio workloads to install. Can be specified multiple times for multiple workloads.",

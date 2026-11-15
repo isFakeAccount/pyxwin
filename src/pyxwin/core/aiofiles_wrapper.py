@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from hashlib import new, sha256
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import aiofiles
 import httpx
@@ -16,6 +16,14 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from rich.progress import Progress
+
+
+class DownloadItem(NamedTuple):
+    """A file to download and the checksum to validate it against."""
+
+    url: str
+    file_path: Path
+    target_sha256: str
 
 
 async def fetch_file(url: str) -> str:
@@ -152,7 +160,7 @@ async def stream_download_and_hash(url: str, file_path: Path, target_sha256: str
             raise PyxwinDownloadError(status_code=None, message=f"SHA256 mismatch for url {url}")
 
 
-async def multi_download_and_validate(files: list[tuple[str, Path, str]], *, max_concurrent: int = 5, progress: Progress | None = None) -> None:
+async def multi_download_and_validate(files: list[DownloadItem], *, max_concurrent: int = 5, progress: Progress | None = None) -> None:
     """Downloads and validates multiple files concurrently.
 
     :param files: A list of tuples containing (url, file_path, target_sha256) for each file.

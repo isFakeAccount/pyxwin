@@ -6,7 +6,6 @@ from enum import IntEnum, StrEnum
 from pathlib import Path, PureWindowsPath
 from typing import Any, Self
 
-from platformdirs import user_cache_path
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
@@ -163,19 +162,3 @@ class VisualStudioInstallerOptions(BaseModel, validate_assignment=True):
     channel: Channel
     manifest_version: ManifestVersion
     workloads: list[str]
-
-    @classmethod
-    def get_default_manifest_options(cls) -> Self:
-        """Returns the default manifest options for pyxwin.
-
-        :returns: The default manifest options.
-
-        """
-        return cls(
-            accept_license=False,
-            cache_dir=user_cache_path("pyxwin", "pyxwin") / "msvcrt",
-            channel_manifest_path=None,
-            channel=Channel.STABLE,
-            manifest_version=ManifestVersion.VS2026,
-            workloads=[],
-        )

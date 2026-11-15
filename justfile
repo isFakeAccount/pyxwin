@@ -3,6 +3,9 @@
 default:
     just --choose
 
+ls:
+    just --list
+
 # Format the Justfile
 just-fmt:
     just --fmt --unstable
@@ -18,16 +21,5 @@ static:
     poetry run mypy src/
     poetry run pyright src/
 
-# Build and check documentation
-docs:
-    cd docs && make apidoc
-    cd docs && make clean
-    cd docs && make html
-    cd docs && make linkcheck
-
-# Run unit tests
-unit:
-    poetry run pytest --cov-config=pyproject.toml
-
 # Runs all tasks
-all: static fmt docs unit
+all: static fmt

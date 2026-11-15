@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path  # noqa: TC003 Typer needs Path here
+from typing import TYPE_CHECKING
 
 import questionary
 import typer
@@ -19,37 +19,38 @@ from pyxwin.wincrt_sdk.vs_workload import get_workload_names, resolve_workload_p
 # Note: Typer needs these outside of TYPE_CHECKING block
 from pyxwin_cli.wincrtsdk_cli.wincrt_cmd_options import (  # noqa: TC001
     accept_license_opt,
-    cache_dir_opt,
     channel_opt,
     manifest_opt,
     manifest_version_opt,
-    workloads_opt,
+    workload_opt,
 )
+
+if TYPE_CHECKING:
+    from pyxwin_cli.__main__ import PyxwinGlobalOptions
 
 wincrt_app = typer.Typer()
 
-manifest_options = VisualStudioInstallerOptions.get_default_manifest_options()
 
 VISUAL_STUDIO_2026_CHANNEL = 18
 
 
 @wincrt_app.command()
-def download() -> list[Path]:
+def download(ctx: typer.Context, workloads: workload_opt) -> None:
     """Downloads all the packages specified based on the CLI options."""
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task(f"Fetching Visual Studio channel manifest version {manifest_options.manifest_version}...")
-        manifest_data = asyncio.run(load_channel_manifest(manifest_options))
-        progress.update(task, completed=100)
+    installer_options: VisualStudioInstallerOptions = ctx.obj
+    installer_options.workloads = workloads
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Fetching Visual Studio installer manifest ...")
-        installer_manifest = asyncio.run(load_installer_manifest(manifest_data, manifest_options))
-        progress.update(task, completed=100)
+        progress.add_task(f"Fetching Visual Studio channel manifest version {installer_options.manifest_version}...")
+        manifest_data = asyncio.run(load_channel_manifest(installer_options))
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Pruning package from installer manifest...")
-        workload_payloads = resolve_workload_payloads(installer_manifest, manifest_options)
-        progress.update(task, completed=100)
+        progress.add_task("Fetching Visual Studio installer manifest ...")
+        installer_manifest = asyncio.run(load_installer_manifest(manifest_data, installer_options))
+
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+        progress.add_task("Pruning package from installer manifest...")
+        workload_payloads = resolve_workload_payloads(installer_manifest, installer_options)
 
     with Progress(
         TextColumn("[progress.description]{task.description}", table_column=Column(width=80, no_wrap=True)),
@@ -58,16 +59,14 @@ def download() -> list[Path]:
         TaskProgressColumn(),
         transient=True,
     ) as progress:
-        downloaded_file_paths = asyncio.run(download_packages(manifest_options, workload_payloads, progress))
-        for task_id in progress.task_ids:
-            progress.update(task_id, completed=100)
-
-    return downloaded_file_paths
+        asyncio.run(download_packages(installer_options, workload_payloads, progress))
 
 
 @wincrt_app.command()
-def interactive() -> None:
+def interactive(ctx: typer.Context) -> None:
     """Provides an interactive way to download the Visual Studio workloads."""
+    installer_options: VisualStudioInstallerOptions = ctx.obj
+
     style = questionary.Style(
         [
             ("selected", "fg:#68217A bold"),
@@ -88,18 +87,16 @@ def interactive() -> None:
         ],
     ).ask()
 
-    manifest_options.channel = channel
-    manifest_options.manifest_version = manifest_version
+    installer_options.channel = channel
+    installer_options.manifest_version = manifest_version
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task(f"Fetching Visual Studio channel manifest version {manifest_options.manifest_version}...")
-        manifest_data = asyncio.run(load_channel_manifest(manifest_options))
-        progress.update(task, completed=100)
+        progress.add_task(f"Fetching Visual Studio channel manifest version {installer_options.manifest_version}...")
+        manifest_data = asyncio.run(load_channel_manifest(installer_options))
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Fetching Visual Studio installer manifest ...")
-        installer_manifest = asyncio.run(load_installer_manifest(manifest_data, manifest_options))
-        progress.update(task, completed=100)
+        progress.add_task("Fetching Visual Studio installer manifest ...")
+        installer_manifest = asyncio.run(load_installer_manifest(manifest_data, installer_options))
 
     workload_names = get_workload_names(installer_manifest)
     selected_workloads = questionary.checkbox(
@@ -107,18 +104,20 @@ def interactive() -> None:
         style=style,
         choices=[questionary.Choice(workload) for workload in workload_names],
     ).ask()
-    manifest_options.workloads = selected_workloads
 
-    reduce()
+    reduce(ctx, selected_workloads)
 
 
 @wincrt_app.command()
-def unpack() -> None:
+def unpack(ctx: typer.Context, workloads: workload_opt) -> None:
     """Unpacks all the downloaded CRT & SDK packages. Downloads them first if not already present."""
-    download_directory = manifest_options.cache_dir / "downloads" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
-    download()
+    installer_options: VisualStudioInstallerOptions = ctx.obj
+    installer_options.workloads = workloads
 
-    for workload_name in manifest_options.workloads:
+    download_directory = installer_options.cache_dir / "downloads" / f"manifest_{installer_options.manifest_version}" / installer_options.channel
+    download(ctx, workloads)
+
+    for workload_name in installer_options.workloads:
         workload_dir = download_directory / workload_name
 
         crt_packages_dir = list(workload_dir.rglob("*.vsix"))
@@ -126,31 +125,31 @@ def unpack() -> None:
         downloaded_file_paths = crt_packages_dir + sdk_packages_dir
 
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-            task = progress.add_task(f"Unpacking CRT {workload_dir.name} packages...")
-            asyncio.run(main=unpack_files(manifest_options, downloaded_file_paths))
-            progress.update(task, completed=100)
+            progress.add_task(f"Unpacking CRT {workload_dir.name} packages...")
+            asyncio.run(main=unpack_files(installer_options, downloaded_file_paths))
 
 
 @wincrt_app.command()
-def reduce() -> None:
+def reduce(ctx: typer.Context, workloads: workload_opt) -> None:
     """Combines all the CRT & SDK packages into a simple structure that can be easily linked against."""
-    unpack_directory = manifest_options.cache_dir / "unpack" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
-    unpack()
+    installer_options: VisualStudioInstallerOptions = ctx.obj
+    installer_options.workloads = workloads
+
+    unpack_directory = installer_options.cache_dir / "unpack" / f"manifest_{installer_options.manifest_version}" / installer_options.channel
+    unpack(ctx, workloads)
 
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
-        task = progress.add_task("Reducing workload packages...")
-        reduce_unpacked_files(unpack_directory, manifest_options)
-        progress.update(task, completed=100)
+        progress.add_task("Reducing workload packages...")
+        reduce_unpacked_files(unpack_directory, installer_options)
 
 
 @wincrt_app.callback()
 def app_callback(
-    accept_license: accept_license_opt = manifest_options.accept_license,
-    cache_dir: cache_dir_opt = manifest_options.cache_dir,
-    channel: channel_opt = manifest_options.channel,
-    manifest_path: manifest_opt = manifest_options.channel_manifest_path,
-    manifest_version: manifest_version_opt = manifest_options.manifest_version,
-    workloads: workloads_opt = manifest_options.workloads,
+    ctx: typer.Context,
+    accept_license: accept_license_opt = False,
+    channel: channel_opt = Channel.STABLE,
+    manifest_path: manifest_opt = None,
+    manifest_version: manifest_version_opt = ManifestVersion.VS2026,
 ) -> None:
     """Callback function for the pyxwin CLI. Processes the global CLI options."""
     if accept_license:
@@ -176,9 +175,13 @@ def app_callback(
         print("For manifest version 17 or lower, channel must be 'release' or 'preview'.")
         raise typer.Exit(code=1)
 
-    # If args are provided, override the default manifest options
-    manifest_options.cache_dir = cache_dir
-    manifest_options.channel = channel
-    manifest_options.channel_manifest_path = manifest_path
-    manifest_options.manifest_version = manifest_version
-    manifest_options.workloads = workloads
+    pyxwin_global_opt: PyxwinGlobalOptions = ctx.obj
+    installer_options = VisualStudioInstallerOptions(
+        accept_license=accept_license,
+        cache_dir=pyxwin_global_opt.cache_dir / "msvcrt",
+        channel_manifest_path=manifest_path,
+        channel=channel,
+        manifest_version=manifest_version,
+        workloads=[],
+    )
+    ctx.obj = installer_options

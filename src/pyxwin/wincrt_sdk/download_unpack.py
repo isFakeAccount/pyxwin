@@ -10,7 +10,7 @@ from platform import system
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
-from pyxwin.core.aiofiles_wrapper import async_read_text, async_write_text, multi_download_and_validate
+from pyxwin.core.aiofiles_wrapper import DownloadItem, async_read_text, async_write_text, multi_download_and_validate
 from pyxwin.wincrt_sdk.msft_file_operations import multi_extract_msi_async, multi_extract_vsix_async
 
 if TYPE_CHECKING:
@@ -23,20 +23,20 @@ async def download_packages(
     manifest_options: VisualStudioInstallerOptions,
     workload_payloads: dict[str, dict[str, list[ManifestPayload]]],
     progress: Progress | None = None,
-) -> list[Path]:
+) -> None:
     """Downloads the specified Windows CRT and SDK packages to specific paths.
 
     :param workload_packages: A dictionary mapping architectures to lists of SDKPayload or CRTPayload objects
         representing the packages to download.
 
     """
-    files_to_download: list[tuple[str, Path, str]] = []
+    files_to_download: list[DownloadItem] = []
     download_directory = manifest_options.cache_dir / "downloads" / f"manifest_{manifest_options.manifest_version}" / manifest_options.channel
 
-    task_groups: list[asyncio.Task[list[tuple[str, Path, str]]]] = []
+    task_groups: list[asyncio.Task[list[DownloadItem]]] = []
     async with asyncio.TaskGroup() as tg:
         for workload, workload_payloads_per_arch in workload_payloads.items():
-            task_groups.append(tg.create_task(_download_workload(download_directory, workload, workload_payloads_per_arch, manifest_options.cache_dir)))
+            task_groups.append(tg.create_task(_filter_workload_downloads(download_directory, workload, workload_payloads_per_arch, manifest_options.cache_dir)))
 
     for task in task_groups:
         files_to_download.extend(await task)
@@ -45,16 +45,14 @@ async def download_packages(
         tg.create_task(multi_download_and_validate(files_to_download, max_concurrent=5, progress=progress))
         tg.create_task(_snapshot_workloads_state(download_directory, manifest_options.cache_dir, workload_payloads))
 
-    return [x[1] for x in files_to_download]
 
-
-async def _download_workload(
+async def _filter_workload_downloads(
     download_directory: Path,
     workload: str,
     workload_payloads_per_arch: dict[str, list[ManifestPayload]],
     cache_dir: Path,
-) -> list[tuple[str, Path, str]]:
-    """Downloads the specified workload packages to specific paths.
+) -> list[DownloadItem]:
+    """Determine which files for a workload still need to be downloaded.
 
     Triggers re-download if the file does not exist or if the SHA256 checksum does not match from upstream.
 
@@ -66,7 +64,7 @@ async def _download_workload(
     :returns: A list of tuples containing (url, file_path, target_sha256) for each package that needs to be downloaded.
 
     """
-    files_to_download: list[tuple[str, Path, str]] = []
+    files_to_download: list[DownloadItem] = []
     snapshot_dir = download_directory / "workload_snapshots"
     workload_snapshot_file = snapshot_dir / f"{workload}.json"
 
@@ -89,7 +87,7 @@ async def _download_workload(
 
             if needs_download:
                 file_path.parent.mkdir(exist_ok=True, parents=True)
-                files_to_download.append((package.url, file_path, package.sha256))
+                files_to_download.append(DownloadItem(package.url, file_path, package.sha256))
 
     return files_to_download
 

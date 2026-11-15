@@ -17,18 +17,6 @@ class PyxwinDownloadError(PyxwinError):
         super().__init__(message)
 
 
-class PyxwinMissingPackageError(PyxwinError):
-    """Raised when a required or a requested package is missing."""
-
-
-class UnsupportedPackageConfigurationError(PyxwinError):
-    """Raised when the package configuration is not supported."""
-
-
-class MissingFieldError(PyxwinError):
-    """Raised when a required field is missing in a data structure."""
-
-
 class MalformedJsonError(PyxwinError):
     """Raised when a JSON file is malformed or cannot be parsed."""
 
